@@ -1,0 +1,93 @@
+import axios, { AxiosError } from 'axios'
+
+export class ApiError extends Error {
+  status?: number
+  payload?: unknown
+
+  constructor(message: string, status?: number, payload?: unknown) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.payload = payload
+  }
+}
+
+const defaultBaseUrl = 'http://localhost:8000/api'
+
+export const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? defaultBaseUrl,
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: false,
+})
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response) {
+      const message =
+        (error.response.data as { detail?: string })?.detail ??
+        error.message ??
+        '接口调用失败'
+      return Promise.reject(new ApiError(message, error.response.status, error.response.data))
+    }
+
+    if (error.request) {
+      return Promise.reject(new ApiError('无法连接到后端服务，请检查网络或服务状态。'))
+    }
+
+    return Promise.reject(new ApiError(error.message))
+  },
+)
+
+export async function downloadFile(
+  url: string,
+  fallbackFilename: string,
+): Promise<void> {
+  const requestUrl = resolveRequestUrl(url)
+  const response = await apiClient.get<ArrayBuffer>(requestUrl, {
+    responseType: 'blob',
+    baseURL: undefined,
+  })
+
+  const blob = new Blob([response.data])
+  let filename = fallbackFilename
+
+  const contentDisposition = response.headers['content-disposition']
+  if (contentDisposition) {
+    const match = /filename\*?=(?:UTF-8''|")?([^;"']+)/i.exec(contentDisposition)
+    if (match && match[1]) {
+      filename = decodeURIComponent(match[1].replace(/"/g, ''))
+    }
+  }
+
+  const link = document.createElement('a')
+  const href = window.URL.createObjectURL(blob)
+  link.href = href
+  link.download = filename
+  link.style.display = 'none'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(href)
+}
+
+function resolveRequestUrl(target: string): string {
+  if (/^https?:\/\//i.test(target)) {
+    return target
+  }
+
+  const base = apiClient.defaults.baseURL ?? defaultBaseUrl
+  try {
+    const baseUrl = new URL(base, window.location.origin)
+    if (target.startsWith('/')) {
+      return `${baseUrl.protocol}//${baseUrl.host}${target}`
+    }
+    return new URL(target, baseUrl).toString()
+  } catch {
+    return target
+  }
+}
+
