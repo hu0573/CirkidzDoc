@@ -19,12 +19,12 @@
   - [x] 配置 `docker-compose.yml` / Dev Container，集成 `make render-sample`、`make healthcheck` 等脚本验证 Pandoc、LibreOffice、ImageMagick 可用性。
   - [x] 撰写《镜像使用与调试手册.md》，记录依赖版本、构建流程与常见问题排查。
   - [x] 2025-11-11 于本地执行 `make healthcheck` 与 `make render-sample`，确认镜像构建、依赖探测与渲染链路可用。
-- [ ] **任务组 3：后端基础设施**
-  - [ ] 初始化 FastAPI 项目骨架，配置 Pydantic 模型与路由框架。
-  - [ ] 建立模板目录结构与加载缓存机制，提供示例模板元数据。
-  - [ ] 引入 `uv` 管理 Python 依赖，生成锁文件并制定依赖更新流程。
-  - [ ] 配置 Makefile/justfile，固化开发环境并复用镜像健康检查脚本。
-  - [ ] 引入配置管理、日志基线，完成《后端环境配置说明.md》。
+- [x] **任务组 3：后端基础设施**
+  - [x] 初始化 FastAPI 项目骨架，配置 Pydantic 模型与路由框架。
+  - [x] 建立模板目录结构与加载缓存机制，提供示例模板元数据。
+  - [x] 引入 `uv` 管理 Python 依赖，生成锁文件并制定依赖更新流程。
+  - [x] 配置 Makefile/justfile，固化开发环境并复用镜像健康检查脚本。
+  - [x] 引入配置管理、日志基线，完成《后端环境配置说明.md》。
 - [ ] **任务组 4：后端渲染与转换能力**
   - [ ] 实现 DOCX 渲染服务，覆盖图片、条件逻辑等场景。
   - [ ] 实现 PDF 表单填充与导出，处理扁平化、PDF/A 选项。

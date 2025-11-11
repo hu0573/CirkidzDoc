@@ -1,0 +1,46 @@
+{
+  "id": "example_contract",
+  "name": "示例合同",
+  "description": "基础合同模板，包含甲乙双方信息与签署日期",
+  "version": "1.0.0",
+  "entry": "template.docx",
+  "preview": "preview.png",
+  "fields": [
+    {
+      "name": "party_a_name",
+      "label": "甲方名称",
+      "type": "string",
+      "required": true,
+      "placeholder": "请输入甲方公司名称"
+    },
+    {
+      "name": "party_b_name",
+      "label": "乙方名称",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "sign_date",
+      "label": "签署日期",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "is_confidential",
+      "label": "保密条款",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "如果勾选，则在合同末尾追加保密条款章节"
+    }
+  ],
+  "options": {
+    "allowed_outputs": ["docx", "pdf", "html", "markdown"],
+    "pdf": {
+      "allow_flatten": true,
+      "allow_pdfa": true,
+      "allow_password": true
+    }
+  }
+}
+

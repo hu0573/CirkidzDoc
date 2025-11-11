@@ -1,0 +1,29 @@
+[project]
+name = "cirkidz-backend"
+version = "0.1.0"
+description = "文档模板填充与转换后端服务"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.112,<0.115",
+    "loguru>=0.7,<0.8",
+    "pydantic>=2.8,<3.0",
+    "pydantic-settings>=2.3,<3.0",
+    "python-multipart>=0.0.9,<0.0.11",
+    "uvicorn[standard]>=0.30,<0.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.hatch.build.targets.sdist]
+include = ["app", "pyproject.toml", "README.md", "Makefile"]
+
