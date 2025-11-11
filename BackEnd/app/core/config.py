@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     template_root_relative: Path = Field(default=Path("templates"))
     task_expiry_minutes: int = Field(default=60)
     database_url: str = Field(
-        default=f"sqlite:///{(BASE_DIR / 'BackEnd' / 'data' / 'backend.db').resolve()}",
+        default=f"sqlite:///{(BASE_DIR / 'data' / 'backend.db').resolve()}",
     )
     database_echo: bool = Field(default=False)
     results_root_relative: Path = Field(default=Path("results"))
@@ -40,6 +40,12 @@ class Settings(BaseSettings):
         )
     )
     command_timeout_seconds: int = Field(default=180)
+    cors_allow_origins: tuple[str, ...] = Field(
+        default=(
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        )
+    )
 
     @computed_field
     @property

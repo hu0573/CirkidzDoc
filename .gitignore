@@ -2,3 +2,5 @@ ReferenceProjects/
 .venv/
 BackEnd/.venv/
 __pycache__/
+BackEnd/data/
+BackEnd/results/
