@@ -1,8 +1,12 @@
 export type FieldType =
   | 'string'
   | 'number'
+  | 'integer'
   | 'boolean'
   | 'date'
+  | 'datetime'
+  | 'email'
+  | 'phone'
   | 'enum'
   | 'file'
   | 'textarea'
@@ -31,6 +35,17 @@ export interface TemplateSummary {
 
 export interface TemplateDetail {
   template: TemplateMetadata
+}
+
+export interface TemplateFieldUpdate {
+  name: string
+  type: FieldType
+}
+
+export interface TemplateUpdateRequest {
+  name?: string
+  description?: string | null
+  fields?: TemplateFieldUpdate[]
 }
 
 export interface TemplateCreationResponse {

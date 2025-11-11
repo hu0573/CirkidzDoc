@@ -10,13 +10,17 @@ from app.models.templates import (
     TemplateCreationResponse,
     TemplateDetail,
     TemplateSummary,
+    TemplateUpdateRequest,
 )
 from app.services.task_service import TaskNotFoundError, task_service
 from app.services.templates import (
     TemplateCreationError,
     TemplateNotFoundError,
+    TemplateUpdateError,
     create_template_from_upload,
+    delete_template,
     template_repository,
+    update_template_metadata,
 )
 from app.core.config import settings
 
@@ -55,6 +59,51 @@ def get_template_detail(template_id: str) -> TemplateDetail:
         ) from None
 
     return TemplateDetail(template=metadata)
+
+
+@router.patch(
+    "/{template_id}",
+    response_model=TemplateDetail,
+    summary="Update template metadata",
+)
+def patch_template_metadata(template_id: str, payload: TemplateUpdateRequest) -> TemplateDetail:
+    """
+    Update template metadata fields, such as name, description, and field types.
+    """
+
+    try:
+        metadata = update_template_metadata(template_id, payload)
+    except TemplateNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Template {template_id} does not exist",
+        ) from None
+    except TemplateUpdateError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    return TemplateDetail(template=metadata)
+
+
+@router.delete(
+    "/{template_id}",
+    status_code=HTTPStatus.NO_CONTENT,
+    summary="Delete template",
+)
+def remove_template(template_id: str) -> None:
+    """
+    Delete the template directory and remove it from the registry.
+    """
+
+    try:
+        delete_template(template_id)
+    except TemplateNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Template {template_id} does not exist",
+        ) from None
 
 
 @router.post(

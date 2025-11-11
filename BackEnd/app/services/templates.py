@@ -11,7 +11,7 @@ from zipfile import ZipFile
 from loguru import logger
 
 from app.core.config import settings
-from app.models.templates import FieldSchema, TemplateMetadata
+from app.models.templates import FieldSchema, TemplateMetadata, TemplateUpdateRequest
 
 
 class TemplateNotFoundError(KeyError):
@@ -80,6 +80,19 @@ class TemplateRepository:
         except KeyError as exc:
             raise TemplateNotFoundError(template_id) from exc
 
+    def _metadata_path(self, template_id: str) -> Path:
+        path = self.template_root / template_id / "metadata.json"
+        if not path.exists():
+            raise TemplateNotFoundError(template_id)
+        return path
+
+    def delete_template(self, template_id: str) -> None:
+        template_dir = self.template_root / template_id
+        if not template_dir.exists():
+            raise TemplateNotFoundError(template_id)
+        shutil.rmtree(template_dir, ignore_errors=False)
+        self.refresh()
+
     def refresh(self) -> None:
         """
         Clear the cache so that the next read reloads from disk.
@@ -90,12 +103,29 @@ class TemplateRepository:
         # Warm the cache to avoid latency on the first request.
         _cached_registry(str(self.template_root))
 
+    def save_template(self, metadata: TemplateMetadata) -> TemplateMetadata:
+        """
+        Persist template metadata to disk and refresh the cache.
+        """
+
+        metadata_path = self._metadata_path(metadata.id)
+        metadata_path.write_text(
+            json.dumps(metadata.model_dump(mode="json"), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        self.refresh()
+        return self.get_template(metadata.id)
+
 
 template_repository = TemplateRepository()
 
 
 class TemplateCreationError(ValueError):
     """Raised when a template upload cannot be processed."""
+
+
+class TemplateUpdateError(ValueError):
+    """Raised when template metadata updates are invalid."""
 
 
 @dataclass(slots=True)
@@ -215,4 +245,55 @@ def create_template_from_upload(
     )
 
     return TemplateCreationResult(metadata=metadata, template_dir=template_dir, metadata_path=metadata_path)
+
+
+def update_template_metadata(template_id: str, payload: TemplateUpdateRequest) -> TemplateMetadata:
+    """
+    Update template metadata and persist the updated model to disk.
+    """
+
+    try:
+        current = template_repository.get_template(template_id)
+    except TemplateNotFoundError as exc:
+        raise exc
+
+    updated = current.model_copy(deep=True)
+
+    if payload.name is not None:
+        updated.name = payload.name
+    if payload.description is not None:
+        updated.description = payload.description
+
+    if payload.fields is not None:
+        existing_fields = updated.fields
+        incoming_names = [field.name for field in payload.fields]
+        expected_names = [field.name for field in existing_fields]
+
+        if set(incoming_names) != set(expected_names):
+            raise TemplateUpdateError("Field updates must reference all existing fields by name.")
+
+        seen: set[str] = set()
+        updates_lookup = {field.name: field for field in payload.fields}
+        new_fields: list[FieldSchema] = []
+
+        for field in existing_fields:
+            if field.name not in updates_lookup:
+                raise TemplateUpdateError(f"Missing update entry for field '{field.name}'.")
+            if field.name in seen:
+                raise TemplateUpdateError(f"Duplicate field entry detected: '{field.name}'.")
+            seen.add(field.name)
+            replacement = updates_lookup[field.name]
+            new_fields.append(FieldSchema(name=replacement.name, type=replacement.type))
+
+        updated.fields = new_fields
+
+    return template_repository.save_template(updated)
+
+
+def delete_template(template_id: str) -> None:
+    """
+    Remove a template directory and refresh the registry.
+    """
+
+    template_repository.delete_template(template_id)
 

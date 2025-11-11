@@ -1,0 +1,28 @@
+{
+  "id": "cirkidz-letter",
+  "name": "Cirkidz Letter",
+  "description": "",
+  "entry": "Cirkidz Letter.docx",
+  "fields": [
+    {
+      "name": "first_name",
+      "type": "string"
+    },
+    {
+      "name": "last_name",
+      "type": "string"
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "phone",
+      "type": "string"
+    },
+    {
+      "name": "message",
+      "type": "string"
+    }
+  ]
+}

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { TemplateDetailPanel } from './components/TemplateDetailPanel'
 import { TemplateList } from './components/TemplateList'
 import { TaskCenter } from './components/TaskCenter'
 import { TemplateUploadPanel } from './components/TemplateUploadPanel'
+import { TemplateMetadataEditor } from './components/TemplateMetadataEditor'
 import { downloadFile, ApiError } from './lib/apiClient'
 import {
   fetchFormats,
@@ -13,8 +14,16 @@ import {
   fetchTemplates,
   uploadTemplate,
   submitRenderTask,
+  updateTemplateMetadata,
+  deleteTemplate,
 } from './lib/api'
-import type { RenderRequestPayload, TaskStatus, TemplateDetail } from './lib/types'
+import type {
+  RenderRequestPayload,
+  TaskStatus,
+  TemplateDetail,
+  TemplateUpdateRequest,
+  TemplateSummary,
+} from './lib/types'
 import './App.css'
 
 type TaskMap = Record<string, RenderRequestPayload>
@@ -51,6 +60,10 @@ function App() {
   const [taskPayloadMap, setTaskPayloadMap] = useState<TaskMap>({})
   const [uiError, setUiError] = useState<string | null>(null)
   const [uiNotice, setUiNotice] = useState<string | null>(null)
+  const [isMetadataEditorOpen, setMetadataEditorOpen] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+
+  const queryClient = useQueryClient()
 
   const templatesQuery = useQuery({
     queryKey: ['templates'],
@@ -103,6 +116,85 @@ function App() {
     onError: (error: unknown) => {
       setUiNotice(null)
       setUiError(pickErrorMessage(error))
+    },
+  })
+
+  const updateMetadataMutation = useMutation({
+    mutationFn: ({
+      templateId,
+      payload,
+    }: {
+      templateId: string
+      payload: TemplateUpdateRequest
+    }) => updateTemplateMetadata(templateId, payload),
+    onMutate: () => {
+      setUiError(null)
+      setUiNotice(null)
+    },
+    onSuccess: (detail) => {
+      setMetadataEditorOpen(false)
+      setUiNotice('模版元数据已更新。')
+      queryClient.setQueryData(['template', detail.template.id], detail)
+      queryClient.setQueryData(['templates'], (previous?: TemplateSummary[]) => {
+        if (!previous) {
+          return previous
+        }
+        return previous.map((item) =>
+          item.id === detail.template.id
+            ? {
+                ...item,
+                name: detail.template.name,
+                description: detail.template.description,
+                field_count: detail.template.fields.length,
+              }
+            : item,
+        )
+      })
+    },
+    onError: (error: unknown) => {
+      setUiNotice(null)
+      setUiError(pickErrorMessage(error))
+    },
+  })
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (templateId: string) => deleteTemplate(templateId),
+    onMutate: (templateId) => {
+      setPendingDeleteId(templateId)
+      setUiError(null)
+      setUiNotice(null)
+    },
+    onSuccess: (_, templateId) => {
+      queryClient.setQueryData(['templates'], (previous?: TemplateSummary[]) => {
+        if (!previous) {
+          return previous
+        }
+        return previous.filter((item) => item.id !== templateId)
+      })
+      queryClient.removeQueries({ queryKey: ['template', templateId], exact: true })
+      setUiNotice('Template deleted.')
+
+      const latestTemplates = queryClient.getQueryData<TemplateSummary[]>(['templates']) ?? []
+      if (!latestTemplates.length) {
+        setSelectedTemplateId(null)
+        queryClient.removeQueries({ queryKey: ['template', selectedTemplateId], exact: true })
+        return
+      }
+      if (selectedTemplateId === templateId) {
+        const nextSelected = latestTemplates[0]?.id ?? null
+        setSelectedTemplateId(nextSelected)
+      }
+    },
+    onError: (error: unknown) => {
+      setUiNotice(null)
+      setUiError(pickErrorMessage(error))
+    },
+    onSettled: () => {
+      setPendingDeleteId(null)
+      void templatesQuery.refetch()
+      if (selectedTemplateId) {
+        void templateDetailQuery.refetch()
+      }
     },
   })
 
@@ -212,6 +304,24 @@ function App() {
                   setSelectedTemplateId(id)
                   setUiError(null)
                 }}
+                onEdit={(id) => {
+                  setSelectedTemplateId(id)
+                  setUiError(null)
+                  setMetadataEditorOpen(true)
+                }}
+                onDelete={(id, name) => {
+                  if (deleteTemplateMutation.isPending && pendingDeleteId !== id) {
+                    return
+                  }
+                  const confirmed = window.confirm(
+                    `Delete template "${name}"? This action will remove the template folder from the backend.`,
+                  )
+                  if (!confirmed) {
+                    return
+                  }
+                  void deleteTemplateMutation.mutateAsync(id)
+                }}
+                deletingId={pendingDeleteId}
                 isLoading={templatesQuery.isLoading}
                 error={templatesQuery.error ? templateLoadError : null}
               />
@@ -239,6 +349,23 @@ function App() {
           onClear={resetHistory}
         />
       </main>
+      <TemplateMetadataEditor
+        template={templateDetail?.template}
+        isOpen={isMetadataEditorOpen}
+        isSubmitting={updateMetadataMutation.isPending}
+        onClose={() => setMetadataEditorOpen(false)}
+        onSubmit={async (payload) => {
+          if (!templateDetail?.template) {
+            return
+          }
+          await updateMetadataMutation.mutateAsync({
+            templateId: templateDetail.template.id,
+            payload,
+          })
+          void templatesQuery.refetch()
+          void templateDetailQuery.refetch()
+        }}
+      />
     </div>
   )
 }

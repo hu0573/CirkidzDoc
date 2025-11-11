@@ -6,10 +6,28 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-FieldType = Literal["string", "number", "boolean", "date", "enum", "file", "textarea", "richtext"]
+FieldType = Literal[
+    "string",
+    "number",
+    "integer",
+    "boolean",
+    "date",
+    "datetime",
+    "email",
+    "phone",
+    "enum",
+    "file",
+    "textarea",
+    "richtext",
+]
 
 
 class FieldSchema(BaseModel):
+    name: str
+    type: FieldType
+
+
+class FieldUpdate(BaseModel):
     name: str
     type: FieldType
 
@@ -42,6 +60,12 @@ class TemplateSummary(BaseModel):
 
 class TemplateDetail(BaseModel):
     template: TemplateMetadata
+
+
+class TemplateUpdateRequest(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    fields: list[FieldUpdate] | None = None
 
 
 class TemplateCreationResponse(BaseModel):

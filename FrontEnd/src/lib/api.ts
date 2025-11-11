@@ -7,6 +7,7 @@ import type {
   TemplateCreationResponse,
   TemplateDetail,
   TemplateSummary,
+  TemplateUpdateRequest,
 } from './types'
 
 export async function fetchTemplates(): Promise<TemplateSummary[]> {
@@ -45,5 +46,17 @@ export async function submitRenderTask(payload: RenderRequestPayload): Promise<R
 export async function fetchTaskStatus(taskId: string): Promise<TaskStatus> {
   const response = await apiClient.get<TaskStatus>(`/templates/tasks/${taskId}`)
   return response.data
+}
+
+export async function updateTemplateMetadata(
+  templateId: string,
+  payload: TemplateUpdateRequest,
+): Promise<TemplateDetail> {
+  const response = await apiClient.patch<TemplateDetail>(`/templates/${templateId}`, payload)
+  return response.data
+}
+
+export async function deleteTemplate(templateId: string): Promise<void> {
+  await apiClient.delete(`/templates/${templateId}`)
 }
 

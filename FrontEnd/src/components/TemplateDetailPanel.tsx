@@ -24,6 +24,7 @@ interface FileState {
 }
 
 const unsupportedFieldTypes = new Set(['richtext'])
+const visibleFormatSet = new Set(['docx', 'pdf'])
 
 function formatFieldLabel(field: FieldSchema): string {
   const segments = field.name
@@ -77,19 +78,35 @@ export function TemplateDetailPanel({
     return ['docx']
   }, [formatCatalog, metadata, templateEntry])
 
-  const formatOptions = useMemo(() => {
+  const availableFormats = useMemo(() => {
     if (!systemFormats.length) {
       return []
     }
+    const filtered = systemFormats.filter((fmt) => visibleFormatSet.has(fmt))
+    if (filtered.length) {
+      return filtered
+    }
 
-    return systemFormats.map((fmt) => {
+    if (templateEntry.endsWith('.pdf')) {
+      return ['pdf']
+    }
+
+    return ['docx']
+  }, [systemFormats, templateEntry])
+
+  const formatOptions = useMemo(() => {
+    if (!availableFormats.length) {
+      return []
+    }
+
+    return availableFormats.map((fmt) => {
       const match = formatCatalog?.find((item) => item.id.toLowerCase() === fmt)
       return {
         id: fmt,
         label: match?.label ?? fmt.toUpperCase(),
       }
     })
-  }, [formatCatalog, systemFormats])
+  }, [availableFormats, formatCatalog])
 
   const { register, handleSubmit, reset, setError, clearErrors, formState } = useForm<FormValues>({
     mode: 'onBlur',
@@ -122,13 +139,13 @@ export function TemplateDetailPanel({
     reset(buildDefaultValues(metadata.fields))
     setFileStates({})
     setFileErrors({})
-    if (systemFormats.length) {
-      setSelectedFormats([systemFormats[0]])
+    if (availableFormats.length) {
+      setSelectedFormats(availableFormats)
     } else {
       setSelectedFormats(['docx'])
     }
     setFormatsError(null)
-  }, [metadata, reset, systemFormats])
+  }, [availableFormats, metadata, reset])
 
   const handleFileChange = async (field: FieldSchema, fileList: FileList | null) => {
     const label = formatFieldLabel(field)
@@ -174,8 +191,8 @@ export function TemplateDetailPanel({
 
     const formats = selectedFormats.length
       ? selectedFormats
-      : systemFormats.length
-        ? [systemFormats[0]]
+      : availableFormats.length
+        ? availableFormats
         : ['docx']
 
     if (!formats.length) {
@@ -220,10 +237,15 @@ export function TemplateDetailPanel({
         continue
       }
 
-      if (field.type === 'number') {
+      if (field.type === 'number' || field.type === 'integer') {
         const numericValue = typeof value === 'number' ? value : Number(value)
         if (Number.isNaN(numericValue)) {
           setError(field.name, { type: 'pattern', message: `${label} must be a number` })
+          hasError = true
+          continue
+        }
+        if (field.type === 'integer' && !Number.isInteger(numericValue)) {
+          setError(field.name, { type: 'pattern', message: `${label} must be an integer` })
           hasError = true
           continue
         }
@@ -253,6 +275,7 @@ export function TemplateDetailPanel({
 
     switch (field.type) {
       case 'number':
+      case 'integer':
         return (
           <div key={field.name} className="space-y-1">
             <label htmlFor={field.name} className="text-sm font-medium text-slate-900">
@@ -264,6 +287,7 @@ export function TemplateDetailPanel({
               type="number"
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               disabled={isSubmitting}
+              step={field.type === 'integer' ? '1' : 'any'}
               {...register(field.name)}
             />
             {errorMessage ? <p className="text-xs text-red-600">{errorMessage}</p> : null}
@@ -285,6 +309,7 @@ export function TemplateDetailPanel({
           </div>
         )
       case 'date':
+      case 'datetime':
         return (
           <div key={field.name} className="space-y-1">
             <label htmlFor={field.name} className="text-sm font-medium text-slate-900">
@@ -293,7 +318,7 @@ export function TemplateDetailPanel({
             </label>
             <input
               id={field.name}
-              type="date"
+              type={field.type === 'datetime' ? 'datetime-local' : 'date'}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               disabled={isSubmitting}
               {...register(field.name)}
@@ -330,6 +355,8 @@ export function TemplateDetailPanel({
       case 'string':
       case 'textarea':
       case 'enum':
+      case 'email':
+      case 'phone':
         return (
           <div key={field.name} className="space-y-1">
             <label htmlFor={field.name} className="text-sm font-medium text-slate-900">
@@ -347,7 +374,7 @@ export function TemplateDetailPanel({
             ) : (
               <input
                 id={field.name}
-                type="text"
+                type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 disabled={isSubmitting}
                 {...register(field.name)}
@@ -382,8 +409,10 @@ export function TemplateDetailPanel({
       onSubmit={submit}
     >
       <div className="flex flex-col gap-2 border-b border-slate-100 pb-4">
-        <h2 className="text-lg font-semibold text-slate-900">{metadata.name}</h2>
-        <p className="text-sm text-slate-500">{metadata.description ?? 'No template description available.'}</p>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">{metadata.name}</h2>
+          <p className="text-sm text-slate-500">{metadata.description ?? 'No template description available.'}</p>
+        </div>
         <p className="text-xs text-slate-500">
           Entry file: <span className="font-mono">{metadata.entry}</span>
         </p>
@@ -449,8 +478,8 @@ export function TemplateDetailPanel({
             setFileStates({})
             setFileErrors({})
             clearErrors()
-            if (systemFormats.length) {
-              setSelectedFormats([systemFormats[0]])
+            if (availableFormats.length) {
+              setSelectedFormats(availableFormats)
             } else {
               setSelectedFormats(['docx'])
             }
