@@ -2,45 +2,24 @@
   "id": "example_contract",
   "name": "Sample Contract",
   "description": "Basic contract template that includes party information and the sign date.",
-  "version": "1.0.0",
   "entry": "template.docx",
-  "preview": "preview.png",
   "fields": [
     {
       "name": "party_a_name",
-      "label": "Party A Name",
-      "type": "string",
-      "required": true,
-      "placeholder": "Enter the company name for Party A"
+      "type": "string"
     },
     {
       "name": "party_b_name",
-      "label": "Party B Name",
-      "type": "string",
-      "required": true
+      "type": "string"
     },
     {
       "name": "sign_date",
-      "label": "Sign Date",
-      "type": "date",
-      "required": true
+      "type": "date"
     },
     {
       "name": "is_confidential",
-      "label": "Confidentiality Clause",
-      "type": "boolean",
-      "required": false,
-      "default": false,
-      "description": "When selected, append a confidentiality clause at the end of the contract."
+      "type": "boolean"
     }
-  ],
-  "options": {
-    "allowed_outputs": ["docx", "pdf", "html", "markdown"],
-    "pdf": {
-      "allow_flatten": true,
-      "allow_pdfa": true,
-      "allow_password": true
-    }
-  }
+  ]
 }
 

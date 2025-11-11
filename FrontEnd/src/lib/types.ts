@@ -8,66 +8,35 @@ export type FieldType =
   | 'textarea'
   | 'richtext'
 
-export interface FieldOption {
-  label: string
-  value: string
-}
-
-export interface ValidationRule {
-  pattern?: string
-  min_length?: number
-  max_length?: number
-  minimum?: number
-  maximum?: number
-  message?: string
-}
-
 export interface FieldSchema {
   name: string
-  label: string
   type: FieldType
-  required?: boolean
-  description?: string | null
-  placeholder?: string | null
-  default?: unknown
-  options?: FieldOption[]
-  validation?: ValidationRule | null
-}
-
-export interface PdfOptionCapabilities {
-  allow_flatten?: boolean
-  allow_pdfa?: boolean
-  allow_password?: boolean
-}
-
-export interface TemplateOptions {
-  allowed_outputs?: string[]
-  pdf?: PdfOptionCapabilities | null
 }
 
 export interface TemplateMetadata {
   id: string
   name: string
   description?: string | null
-  version?: string | null
   entry: string
-  preview?: string | null
   fields: FieldSchema[]
-  options?: TemplateOptions | null
 }
 
 export interface TemplateSummary {
   id: string
   name: string
   description?: string | null
-  version?: string | null
-  preview?: string | null
+  entry: string
   field_count: number
-  allowed_outputs: string[]
 }
 
 export interface TemplateDetail {
   template: TemplateMetadata
+}
+
+export interface TemplateCreationResponse {
+  template: TemplateMetadata
+  metadata_path: string
+  message: string
 }
 
 export interface OutputFormat {

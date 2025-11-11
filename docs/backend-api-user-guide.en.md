@@ -22,19 +22,59 @@ Authentication is currently disabled because the service runs as an internal MVP
     "id": "example_contract",
     "name": "Sample Contract",
     "description": "Basic contract template",
-    "version": "1.0.0",
-    "preview": "preview.png",
-    "field_count": 6,
-    "allowed_outputs": ["docx", "pdf", "html", "markdown"]
+    "entry": "template.docx",
+    "field_count": 4
   }
 ]
 ```
 
 ### 2. Get Template Detail
 - **Endpoint**: `GET /api/templates/{template_id}`
-- **Description**: Return the full metadata of the specified template (field definitions, output options, and more).
+- **Description**: Return the full metadata of the specified template. Metadata now only contains the template identity, entry file, description, and a simplified `fields` collection (`name` + `type`).
+- **Response Example**
+```json
+{
+  "template": {
+    "id": "example_contract",
+    "name": "Sample Contract",
+    "description": "Basic contract template",
+    "entry": "template.docx",
+    "fields": [
+      { "name": "party_a_name", "type": "string" },
+      { "name": "party_b_name", "type": "string" },
+      { "name": "sign_date", "type": "date" }
+    ]
+  }
+}
+```
 
-### 3. Query Supported Output Formats
+### 3. Upload Template
+- **Endpoint**: `POST /api/templates/upload`
+- **Description**: Accept a DOCX template upload, create a new template directory, and generate a starter `metadata.json` by scanning `{{placeholder}}` variables.
+- **Request**: `multipart/form-data` with a single `file` field (`.docx`, ≤ 20 MB).
+- **Response Example**
+```json
+{
+  "template": {
+    "id": "partner-contract",
+    "name": "Partner Contract",
+    "description": "",
+    "entry": "Partner Contract.docx",
+    "fields": [
+      { "name": "client_name", "type": "string" },
+      { "name": "sign_date", "type": "string" }
+    ]
+  },
+  "metadata_path": "partner-contract/metadata.json",
+  "message": "Template created. Update the generated metadata.json to confirm field types."
+}
+```
+- **Notes**
+  - Template IDs are derived from the filename (kebab-case). If a directory already exists, a numeric suffix is appended automatically.
+  - All extracted fields default to type `string`; adjust the generated `metadata.json` if you require other types (such as `date` or `number`).
+  - Newly uploaded templates automatically expose the full set of system-supported output formats—no additional `options` configuration is required.
+
+### 4. Query Supported Output Formats
 - **Endpoint**: `GET /api/formats`
 - **Description**: List the output formats supported by the DOCX conversion pipeline and the available advanced PDF options.
 - **Response Example**
@@ -55,7 +95,7 @@ Authentication is currently disabled because the service runs as an internal MVP
 }
 ```
 
-### 4. Submit a Render Task
+### 5. Submit a Render Task
 - **Endpoint**: `POST /api/templates/render`
 - **Status Code**: `202 Accepted`
 - **Description**: Create an asynchronous render task; the backend processes it and stores the results in the database.
@@ -89,7 +129,7 @@ Authentication is currently disabled because the service runs as an internal MVP
   - `404`: Template does not exist.
   - `422`: Request validation failed.
 
-### 5. Get Task Status
+### 6. Get Task Status
 - **Endpoint**: `GET /api/templates/tasks/{task_id}`
 - **Description**: Return the task status, progress, and list of generated results.
 - **Response Example**
@@ -116,7 +156,7 @@ Authentication is currently disabled because the service runs as an internal MVP
   - `succeeded`: All results generated successfully.
   - `failed`: Task failed, and `error` contains the reason.
 
-### 6. Download Task Result
+### 7. Download Task Result
 - **Endpoint**: `GET /api/templates/tasks/{task_id}/files/{format}?token=<download_token>`
 - **Description**: Download a generated file by providing the task ID, desired format, and download token.
 - **Response**: Binary stream with the default media type `application/octet-stream`.

@@ -123,41 +123,26 @@
   {
     "id": "example_contract",
     "name": "示例合同",
-    "description": "基础合同模板，包含当事人信息与条款",
-    "version": "1.0.0",
+    "description": "",
     "entry": "template.docx",
-    "preview": "preview.png",
     "fields": [
       {
         "name": "party_a_name",
-        "label": "甲方名称",
-        "type": "string",
-        "required": true,
-        "placeholder": "请输入公司名称"
+        "type": "string"
       },
       {
         "name": "sign_date",
-        "label": "签署日期",
-        "type": "date",
-        "required": true
+        "type": "date"
       }
-    ],
-    "options": {
-      "allowed_outputs": ["docx", "pdf", "html", "markdown"],
-      "pdf": {
-        "allow_flatten": true,
-        "allow_pdfa": true,
-        "allow_password": true
-      }
-    }
+    ]
   }
   ```
-- **字段类型映射**：`string`、`number`、`boolean`、`date`、`enum`、`file`、`textarea/richtext`；支持正则、最值、长度等校验规则。
-- **高级配置**：字段分组（steps/sections）、条件显示（依赖表达式）、默认值计算（表达式），后续可与 JSON Schema/自定义 DSL 融合。
+- **字段类型枚举**：`string`、`number`、`boolean`、`date`、`enum`、`file`、`textarea/richtext`；默认全部识别为 `string`，需人工确认并调整类型。
+- **高级配置设想**：字段分组（steps/sections）、条件显示（依赖表达式）、默认值计算（表达式）等可在后续版本结合 JSON Schema 或自定义 DSL 扩展实现。
 
 ## 核心业务流程
-1. 用户进入前端，选择模板，加载字段定义、预览、支持输出格式。
-2. 前端基于字段元数据生成动态表单，展示高级选项（PDF/A、加密等）。
+1. 用户进入前端，选择模板，加载字段定义与系统维护的输出格式列表。
+2. 前端基于字段元数据生成动态表单，必要时展示 PDF 高级选项（后续迭代可进一步精简）。
 3. 用户填写数据后提交：
    - 前端执行校验，构建 `RenderRequest`，调用 `POST /api/templates/render`。
    - 后端校验字段与选项，创建任务记录，写入持久化存储，返回 `task_id`。

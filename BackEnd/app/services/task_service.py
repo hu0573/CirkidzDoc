@@ -15,6 +15,7 @@ from app.db.models import TaskRecord, TaskResultRecord, TaskStatusEnum, Template
 from app.db.session import session_scope
 from app.models.templates import RenderRequest, RenderResponse, TaskResult, TaskStatus, TemplateMetadata
 from app.services.render_engine import RenderEngine, RenderOutcome, render_engine
+from app.services.conversion_pipeline import DEFAULT_DOCX_OUTPUT_FORMATS
 from app.services.templates import TemplateRepository, template_repository
 
 
@@ -47,7 +48,6 @@ class TaskService:
                 id=metadata.id,
                 name=metadata.name,
                 description=metadata.description,
-                version=metadata.version,
                 entry=metadata.entry,
                 status="active",
             )
@@ -55,7 +55,6 @@ class TaskService:
         else:
             record.name = metadata.name
             record.description = metadata.description
-            record.version = metadata.version
             record.entry = metadata.entry
 
     # ------------------------ Clean up --------------------- #
@@ -90,16 +89,13 @@ class TaskService:
         if request.formats:
             return [fmt.lower() for fmt in dict.fromkeys(request.formats)]
 
-        if metadata.options and metadata.options.allowed_outputs:
-            return [fmt.lower() for fmt in metadata.options.allowed_outputs]
-
         if metadata.entry.lower().endswith(".docx"):
-            return ["docx"]
+            return list(DEFAULT_DOCX_OUTPUT_FORMATS)
 
         if metadata.entry.lower().endswith(".pdf"):
             return ["pdf"]
 
-        return ["docx"]
+        return list(DEFAULT_DOCX_OUTPUT_FORMATS)
 
     def create_task(self, request: RenderRequest) -> RenderResponse:
         metadata = self.repository.get_template(request.template_id)

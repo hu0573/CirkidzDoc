@@ -152,3 +152,8 @@ class ConversionPipeline:
         return output_path
 
 
+DEFAULT_DOCX_OUTPUT_FORMATS = tuple(
+    sorted({ConversionPipeline.normalise_format(fmt) for fmt in ConversionPipeline.DOCX_OUTPUTS})
+)
+
+

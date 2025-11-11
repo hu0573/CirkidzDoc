@@ -52,9 +52,7 @@ export function TemplateList({ templates, selectedId, onSelect, isLoading, error
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">{template.name}</h3>
-                {template.version ? (
-                  <p className="text-xs text-slate-500">Version {template.version}</p>
-                ) : null}
+                <p className="text-xs text-slate-500">{template.entry}</p>
               </div>
               <span
                 className={[
@@ -68,18 +66,6 @@ export function TemplateList({ templates, selectedId, onSelect, isLoading, error
             <p className="line-clamp-3 text-sm text-slate-600">
               {template.description ?? 'No description available.'}
             </p>
-            {template.allowed_outputs.length ? (
-              <div className="flex flex-wrap gap-1">
-                {template.allowed_outputs.map((format) => (
-                  <span
-                    key={format}
-                    className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-600"
-                  >
-                    {format}
-                  </span>
-                ))}
-              </div>
-            ) : null}
           </button>
         )
       })}

@@ -22,19 +22,59 @@
     "id": "example_contract",
     "name": "示例合同",
     "description": "基础合同模板",
-    "version": "1.0.0",
-    "preview": "preview.png",
-    "field_count": 6,
-    "allowed_outputs": ["docx", "pdf", "html", "markdown"]
+    "entry": "template.docx",
+    "field_count": 4
   }
 ]
 ```
 
 ### 2. 获取模板详情
 - **Endpoint**：`GET /api/templates/{template_id}`
-- **说明**：返回指定模板的完整元数据（字段定义、输出选项等）。
+- **说明**：返回指定模板的完整元数据信息。元数据现仅包含模板标识、入口文件、描述以及精简后的 `fields` 列表（每个字段仅含 `name` 与 `type`）。
+- **响应示例**
+```json
+{
+  "template": {
+    "id": "example_contract",
+    "name": "示例合同",
+    "description": "基础合同模板",
+    "entry": "template.docx",
+    "fields": [
+      { "name": "party_a_name", "type": "string" },
+      { "name": "party_b_name", "type": "string" },
+      { "name": "sign_date", "type": "date" }
+    ]
+  }
+}
+```
 
-### 3. 查询支持的输出格式
+### 3. 上传模板
+- **Endpoint**：`POST /api/templates/upload`
+- **说明**：接收 DOCX 模板文件，创建模板目录并根据 `{{placeholder}}` 自动生成基础 `metadata.json`。
+- **请求格式**：`multipart/form-data`，包含一个 `file` 字段（仅支持 `.docx`，大小不超过 20MB）。
+- **响应示例**
+```json
+{
+  "template": {
+    "id": "partner-contract",
+    "name": "Partner Contract",
+    "description": "",
+    "entry": "Partner Contract.docx",
+    "fields": [
+      { "name": "client_name", "type": "string" },
+      { "name": "sign_date", "type": "string" }
+    ]
+  },
+  "metadata_path": "partner-contract/metadata.json",
+  "message": "模板已创建，请编辑 metadata.json 确认字段类型。"
+}
+```
+- **备注**
+  - 模板 ID 根据文件名自动转换为 kebab-case，如已存在同名目录会自动追加数字后缀。
+  - 默认将所有占位符生成为 `string` 类型，可以手动编辑生成的 `metadata.json` 调整类型（例如日期或数字）。
+  - 新模板默认启用系统维护的全部输出能力，无需再配置 `options`。
+
+### 4. 查询支持的输出格式
 - **Endpoint**：`GET /api/formats`
 - **说明**：列出 DOCX 转换流水线支持的目标格式及 PDF 高级选项能力。
 - **响应示例**
@@ -55,7 +95,7 @@
 }
 ```
 
-### 4. 提交渲染任务
+### 5. 提交渲染任务
 - **Endpoint**：`POST /api/templates/render`
 - **状态码**：`202 Accepted`
 - **说明**：创建一个异步渲染任务，后台执行后在数据库中记录结果。
@@ -89,7 +129,7 @@
   - `404`：模板不存在。
   - `422`：请求参数校验失败。
 
-### 5. 查询任务状态
+### 6. 查询任务状态
 - **Endpoint**：`GET /api/templates/tasks/{task_id}`
 - **说明**：返回任务状态、进度及生成结果列表。
 - **响应示例**
@@ -116,7 +156,7 @@
   - `succeeded`：全部结果生成完成。
   - `failed`：任务失败，`error` 字段包含失败原因。
 
-### 6. 下载任务结果
+### 7. 下载任务结果
 - **Endpoint**：`GET /api/templates/tasks/{task_id}/files/{format}?token=<download_token>`
 - **说明**：基于任务 ID、目标格式与下载 token 获取文件。
 - **返回**：二进制流，默认 `application/octet-stream`。
@@ -124,17 +164,4 @@
   - `404`：任务不存在、token 无效或文件已过期。
 
 ## 任务生命周期与清理
-- 任务默认有效期由 `BACKEND_TASK_EXPIRY_MINUTES` 控制（默认 60 分钟）。
-- 创建任务时会自动清理已过期任务及其磁盘文件。
-- 结果文件存放于 `results/<task_id>/` 目录，可通过 `BACKEND_RESULTS_ROOT_RELATIVE` 覆盖。
-
-## 数据库存储
-- 默认使用 SQLite（路径：`BackEnd/data/backend.db`），可通过 `BACKEND_DATABASE_URL` 切换到 PostgreSQL 等数据库。
-- 首次启动会自动创建 `templates`、`tasks`、`task_results` 三张表。
-
-## 调试建议
-- 启动后访问 `/docs` 验证 OpenAPI 定义。
-- 使用 `uv run pytest` 运行内置测试确保渲染、转换链路正常。
-- 若外部依赖缺失，可调用 `/health/deps`（待实现）或查看日志定位失败命令。
-
-
+- 任务默认有效期由 `

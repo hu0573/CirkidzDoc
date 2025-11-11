@@ -19,84 +19,47 @@ To ensure templates migrated from docassemble remain reusable in the new backend
 - Sub-template merging: `docxcompose`, `jinja2`
 
 ### Template Metadata Structure
-Templates reside under `templates/<template_id>/` with main files, assets, sample data, and preview images. Metadata is stored in `metadata.json` with the following fields:
+Templates live under `templates/<template_id>/`, each with a main template file and metadata. `metadata.json` now contains the following minimal fields:
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `id` | string | Yes | Unique identifier (kebab-case). |
-| `name` | string | Yes | Display name; supports localization. |
-| `description` | string | Yes | Template description; Markdown-friendly. |
-| `version` | string | Yes | Semantic version used for caching and rollback decisions. |
-| `entry` | string | Yes | Relative path to the main template file. |
-| `preview` | string | No | Preview image path (PNG recommended). |
-| `tags` | string[] | No | Business tags such as industry or document type. |
-| `fields` | FieldSchema[] | Yes | Field definitions (see below). |
-| `options` | object | Yes | Rendering and output options. |
-| `examples` | array | No | Example payloads for integration tests. |
-| `created_at` | string | No | ISO8601 creation timestamp. |
-| `updated_at` | string | No | ISO8601 update timestamp. |
+| `id` | string | Yes | Unique identifier (kebab-case), derived from the uploaded filename. |
+| `name` | string | Yes | Display name; defaults to a title-cased version of the filename. |
+| `description` | string | No | Optional description; defaults to an empty string. |
+| `entry` | string | Yes | Relative path to the main template file (usually `.docx`). |
+| `fields` | FieldSchema[] | Yes | Field definitions, each limited to `name` and `type`. |
 
-Recommended `options` shape:
-```json
-{
-  "allowed_outputs": ["docx", "pdf", "html", "markdown"],
-  "pdf": {
-    "allow_flatten": true,
-    "allow_pdfa": true,
-    "allow_password": true,
-    "default_flatten": false
-  },
-  "docx": {
-    "update_reference_fields": true
-  }
-}
-```
+> Legacy metadata fields—`version`, `preview`, `options`, tag collections, etc.—have been removed. The renderer exposes the full set of supported output formats automatically; no per-template `allowed_outputs` section is required.
 
-### Field Type Mapping & Validation
+Uploading a template performs the following steps:
+1. Normalise the filename to kebab-case to produce the template directory and `id`. Conflicts are resolved by appending a numeric suffix.
+2. Save the uploaded DOCX as the template entry file, preserving the original filename.
+3. Scan all `{{placeholder}}` occurrences inside the DOCX, de-duplicate them, and populate the `fields` array. Every field defaults to type `string`; adjust the generated `metadata.json` to promote types (e.g. `date`, `number`).
+
+### Field Schema
 `FieldSchema` structure:
 ```json
 {
   "name": "party_a_name",
-  "label": "Party A Name",
-  "type": "string",
-  "required": true,
-  "placeholder": "Enter company name",
-  "default": "",
-  "validation": {
-    "pattern": "^[\\u4e00-\\u9fa5A-Za-z0-9（）()]{2,60}$",
-    "message": "Name must be 2-60 characters and can include Chinese brackets"
-  },
-  "options": {
-    "enum": ["option_a", "option_b"]
-  },
-  "depends_on": {
-    "field": "need_extra_clause",
-    "value": true
-  }
+  "type": "string"
 }
 ```
 
-Field type to component mapping:
+Allowed `type` values and the suggested UI mapping:
 
-| `type` | UI Component | Validation | Notes |
-| --- | --- | --- | --- |
-| `string` | Single-line text input | `minLength`, `maxLength`, `pattern` | UTF-8 by default; allow casing helpers. |
-| `textarea` / `richtext` | Multi-line text / rich text editor | Length checks, rich-text whitelist | Sanitize rich text server-side. |
-| `number` | Numeric input | `minimum`, `maximum`, `multipleOf` | Support integers/floats; use `input[type=number]`. |
-| `boolean` | Toggle or checkbox | - | Respect defaults and disabled state. |
-| `date` | Date picker | ISO8601 validation | Extend to `date_range` as needed. |
-| `enum` | Select / radio group | Enum membership | Use `enumLabels` for display strings. |
-| `file` | File upload | MIME and size constraints | Document allowed types and max size. |
-
-Common validation rules:
-- Server-side validation: Re-run all checks in the backend with Pydantic plus custom logic to prevent bypasses.
-- Dependencies: `depends_on` supports simple boolean expressions; extend with a DSL for complex logic later.
-- Defaults: When `default` is absent, fall back to empty string, `false`, `null`, or `[]` depending on type.
-- Internationalization: `label`, `placeholder`, and `validation.message` can use `{ "zh-CN": "...", "en-US": "..." }`.
+| `type` | UI Component | Notes |
+| --- | --- | --- |
+| `string` | Single-line text input | Default type; the frontend uses the field `name` as the label. |
+| `textarea` / `richtext` | Multi-line text / rich text editor | `richtext` still requires sanitation. |
+| `number` | Numeric input | Supports integers and floats. |
+| `boolean` | Toggle or checkbox | |
+| `date` | Date picker | Expect ISO8601 strings in payloads. |
+| `enum` | Select / radio group | Combine with static options in the template. |
+| `file` | File upload | Values are Base64-encoded content. |
 
 ### Conclusions & Next Steps
-1. Use this dependency matrix to build installation scripts that align CLI tool versions with docassemble.
-2. Validate `metadata.json` through JSON Schema in the backend to enforce consistent field definitions.
-3. Feed `FieldSchema` directly into the frontend dynamic-form engine; integrate React Hook Form with Zod/JSON Schema generators for unified validation.
+1. Continue aligning installation scripts with docassemble’s dependency versions for the DOCX/PDF toolchain.
+2. Provide JSON Schema validation for the simplified `metadata.json` to guarantee valid uploads.
+3. Feed the streamlined `FieldSchema` into the frontend form renderer, adding UI affordances to edit field types or add/remove entries as needed.
 
 

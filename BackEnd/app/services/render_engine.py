@@ -11,7 +11,11 @@ from loguru import logger
 from app.core.config import settings
 from app.models.templates import RenderRequest, TemplateMetadata
 from app.services.command_runner import CommandRunner
-from app.services.conversion_pipeline import ConversionPipeline, ConversionResult
+from app.services.conversion_pipeline import (
+    ConversionPipeline,
+    ConversionResult,
+    DEFAULT_DOCX_OUTPUT_FORMATS,
+)
 from app.services.docx_renderer import DocxRenderService
 from app.services.pdf_renderer import PdfRenderOptions, PdfRenderService
 from app.services.templates import TemplateRepository, template_repository
@@ -52,9 +56,11 @@ class RenderEngine:
     def _normalise_formats(formats: Iterable[str] | None, metadata: TemplateMetadata) -> list[str]:
         if formats:
             return list(dict.fromkeys([fmt.lower() for fmt in formats]))
-        if metadata.options and metadata.options.allowed_outputs:
-            return [fmt.lower() for fmt in metadata.options.allowed_outputs]
-        return ["docx"]
+        if metadata.entry.lower().endswith(".docx"):
+            return list(DEFAULT_DOCX_OUTPUT_FORMATS)
+        if metadata.entry.lower().endswith(".pdf"):
+            return ["pdf"]
+        return list(DEFAULT_DOCX_OUTPUT_FORMATS)
 
     @staticmethod
     def _parse_pdf_options(options: dict[str, Any] | None) -> PdfRenderOptions:

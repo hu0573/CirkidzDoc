@@ -4,12 +4,14 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { TemplateDetailPanel } from './components/TemplateDetailPanel'
 import { TemplateList } from './components/TemplateList'
 import { TaskCenter } from './components/TaskCenter'
+import { TemplateUploadPanel } from './components/TemplateUploadPanel'
 import { downloadFile, ApiError } from './lib/apiClient'
 import {
   fetchFormats,
   fetchTaskStatus,
   fetchTemplateDetail,
   fetchTemplates,
+  uploadTemplate,
   submitRenderTask,
 } from './lib/api'
 import type { RenderRequestPayload, TaskStatus, TemplateDetail } from './lib/types'
@@ -48,6 +50,7 @@ function App() {
   const [taskHistory, setTaskHistory] = useState<TaskStatus[]>([])
   const [taskPayloadMap, setTaskPayloadMap] = useState<TaskMap>({})
   const [uiError, setUiError] = useState<string | null>(null)
+  const [uiNotice, setUiNotice] = useState<string | null>(null)
 
   const templatesQuery = useQuery({
     queryKey: ['templates'],
@@ -81,6 +84,24 @@ function App() {
       setTaskHistory((prev) => prev.filter((item) => item.task_id !== response.task_id))
     },
     onError: (error: unknown) => {
+      setUiError(pickErrorMessage(error))
+    },
+  })
+
+  const uploadMutation = useMutation({
+    mutationFn: uploadTemplate,
+    onMutate: () => {
+      setUiError(null)
+      setUiNotice(null)
+    },
+    onSuccess: (response) => {
+      void templatesQuery.refetch()
+      setUiNotice(response.message)
+      setUiError(null)
+      setSelectedTemplateId(response.template.id)
+    },
+    onError: (error: unknown) => {
+      setUiNotice(null)
       setUiError(pickErrorMessage(error))
     },
   })
@@ -170,9 +191,18 @@ function App() {
         {uiError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">{uiError}</div>
         ) : null}
+        {uiNotice ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">{uiNotice}</div>
+        ) : null}
 
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-[2.2fr,3fr]">
           <div className="flex flex-col gap-4">
+            <TemplateUploadPanel
+              onUpload={async (file) => {
+                await uploadMutation.mutateAsync(file)
+              }}
+              isUploading={uploadMutation.isPending}
+            />
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="mb-4 text-base font-semibold text-slate-900">Template List</h2>
               <TemplateList

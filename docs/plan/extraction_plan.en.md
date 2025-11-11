@@ -101,13 +101,25 @@ Extract the document template filling capability from docassemble and rebuild it
 - **Deployment:** Docker Compose locally; automated CI/CD in test; Kubernetes/container service in production with scaling, health checks, and centralized logging.
 
 ## Template & Field Modeling
-- `templates/<id>/metadata.json` example mirrors docassemble (fields, options, outputs).  
-- Field types: `string`, `number`, `boolean`, `date`, `enum`, `file`, `textarea/richtext`; support regex, bounds, length constraints.  
-- Advanced config: field grouping, conditional visibility, default expressions, future JSON Schema/DSL integration.
+- `templates/<id>/metadata.json` example:
+  ```json
+  {
+    "id": "example_contract",
+    "name": "Sample Contract",
+    "description": "",
+    "entry": "template.docx",
+    "fields": [
+      { "name": "party_a_name", "type": "string" },
+      { "name": "sign_date", "type": "date" }
+    ]
+  }
+  ```
+- Field types: `string`, `number`, `boolean`, `date`, `enum`, `file`, `textarea/richtext`; defaults to `string` on upload and can be refined manually.  
+- Advanced configuration ideas: field grouping, conditional visibility, derived defaults—can be added later via JSON Schema or a custom DSL.
 
 ## Core Workflow
-1. User selects a template and retrieves metadata, preview, and supported formats.
-2. Frontend renders the form with advanced options.
+1. User selects a template and retrieves metadata plus the system-maintained output format catalog.
+2. Frontend renders the form from the field list; PDF advanced options can be displayed as needed.
 3. Upon submission:
    - Frontend validates and posts `RenderRequest`.
    - Backend validates, creates a task, persists, and returns `task_id`.
@@ -150,7 +162,7 @@ Extract the document template filling capability from docassemble and rebuild it
 ## Risks & Mitigation
 - Dependency/deployment complexity → containerization and scripted setup.
 - Template compatibility → validation tools and sample library regression tests.
-+- Performance bottlenecks → concurrency control, rate limiting, caching; split rendering and conversion with throughput/latency baselines.
+- Performance bottlenecks → concurrency control, rate limiting, caching; split rendering and conversion with throughput/latency baselines.
 - Resource constraints → enforce CPU/memory quotas and timeouts; monitor external commands.
 - Frontend field configuration → automated validation plus manual review.
 

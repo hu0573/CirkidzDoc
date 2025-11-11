@@ -4,6 +4,7 @@ import type {
   RenderRequestPayload,
   RenderResponse,
   TaskStatus,
+  TemplateCreationResponse,
   TemplateDetail,
   TemplateSummary,
 } from './types'
@@ -20,6 +21,19 @@ export async function fetchTemplateDetail(templateId: string): Promise<TemplateD
 
 export async function fetchFormats(): Promise<FormatsResponse> {
   const response = await apiClient.get<FormatsResponse>('/formats')
+  return response.data
+}
+
+export async function uploadTemplate(file: File): Promise<TemplateCreationResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await apiClient.post<TemplateCreationResponse>('/templates/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
   return response.data
 }
 
