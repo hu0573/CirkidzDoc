@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
     template_root_relative: Path = Field(default=Path("BackEnd/templates"))
     task_expiry_minutes: int = Field(default=60)
+    dependency_commands: tuple[str, ...] = Field(
+        default=(
+            "pandoc",
+            "libreoffice",
+            "qpdf",
+            "gs",
+        )
+    )
+    command_timeout_seconds: int = Field(default=180)
 
     @computed_field
     @property

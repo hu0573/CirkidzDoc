@@ -25,12 +25,12 @@
   - [x] 引入 `uv` 管理 Python 依赖，生成锁文件并制定依赖更新流程。
   - [x] 配置 Makefile/justfile，固化开发环境并复用镜像健康检查脚本。
   - [x] 引入配置管理、日志基线，完成《后端环境配置说明.md》。
-- [ ] **任务组 4：后端渲染与转换能力**
-  - [ ] 实现 DOCX 渲染服务，覆盖图片、条件逻辑等场景。
-  - [ ] 实现 PDF 表单填充与导出，处理扁平化、PDF/A 选项。
-  - [ ] 构建 `ConversionPipeline`，串联 docx → pdf → {html, rtf, tex, md} 转换。
-  - [ ] 集成 Pandoc/LibreOffice 等外部工具健康检查与降级策略。
-  - [ ] 为渲染与转换核心模块编写单元测试，记录至《后端渲染测试说明.md》。
+- [x] **任务组 4：后端渲染与转换能力**
+  - [x] 实现 DOCX 渲染服务，覆盖图片、条件逻辑等场景。
+  - [x] 实现 PDF 表单填充与导出，处理扁平化、PDF/A 选项。
+  - [x] 构建 `ConversionPipeline`，串联 docx → pdf → {html, rtf, tex, md} 转换。
+  - [x] 集成 Pandoc/LibreOffice 等外部工具健康检查与降级策略。
+  - [x] 为渲染与转换核心模块编写单元测试，记录至《后端渲染测试说明.md》。
 - [ ] **任务组 5：后端任务编排与接口**
   - [ ] 设计并迁移数据库表结构（templates、tasks、task_results 等）。
   - [ ] 实现任务创建、进度更新、状态查询 API，支持 BackgroundTasks 抽象。
