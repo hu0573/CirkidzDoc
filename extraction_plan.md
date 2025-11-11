@@ -13,11 +13,11 @@
   - [x] 编写《需求规格说明.md》，存档至 `docs/`.
   - [x] 编写《技术调研报告.md》，覆盖 docassemble 依赖安装方式、版本对齐策略与调试指南。
   - [x] 制定《系统设计蓝图.md》，总结整体架构与关键决策。
-- [ ] **任务组 2：镜像构建与环境对齐**
-  - [ ] 明确 docassemble 同源容器镜像的构建计划与 PoC，沉淀镜像组件清单。
-  - [ ] 编写与 ReferenceProjects/docassemble 对齐的多阶段 Dockerfile，并完成基础镜像构建与版本校验。
-  - [ ] 配置 `docker-compose.yml` / Dev Container，集成 `make render-sample`、`make healthcheck` 等脚本验证 Pandoc、LibreOffice、ImageMagick 可用性。
-  - [ ] 撰写《镜像使用与调试手册.md》，记录依赖版本、构建流程与常见问题排查。
+- [x] **任务组 2：镜像构建与环境对齐**
+  - [x] 明确 docassemble 同源容器镜像的构建计划与 PoC，沉淀镜像组件清单。
+  - [x] 编写与 ReferenceProjects/docassemble 对齐的多阶段 Dockerfile，并完成基础镜像构建与版本校验。
+  - [x] 配置 `docker-compose.yml` / Dev Container，集成 `make render-sample`、`make healthcheck` 等脚本验证 Pandoc、LibreOffice、ImageMagick 可用性。
+  - [x] 撰写《镜像使用与调试手册.md》，记录依赖版本、构建流程与常见问题排查。
 - [ ] **任务组 3：后端基础设施**
   - [ ] 初始化 FastAPI 项目骨架，配置 Pydantic 模型与路由框架。
   - [ ] 建立模板目录结构与加载缓存机制，提供示例模板元数据。

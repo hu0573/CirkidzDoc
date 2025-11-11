@@ -1,0 +1,17 @@
+services:
+  toolkit:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    image: cirkidzdoc/toolkit:dev
+    environment:
+      - RENDER_OUTPUT_DIR=/workspace/output
+      - RENDER_TMP_DIR=/workspace/tmp
+    command: [ "sleep", "infinity" ]
+    volumes:
+      - ./output:/workspace/output
+      - ./tmp:/workspace/tmp
+    working_dir: /workspace
+    tty: true
+    stdin_open: true
+
