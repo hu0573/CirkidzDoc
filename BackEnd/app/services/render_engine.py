@@ -84,7 +84,12 @@ class RenderEngine:
         metadata = self.repository.get_template(request.template_id)
         template_path = self._resolve_template_path(metadata)
 
-        workdir = Path(tempfile.mkdtemp(prefix=f"render-{metadata.id}-"))
+        workdir = Path(
+            tempfile.mkdtemp(
+                prefix=f"render-{metadata.id}-",
+                dir=settings.render_tmp_dir,
+            )
+        )
         logger.debug("Using working directory: {workdir}", workdir=workdir.as_posix())
 
         try:

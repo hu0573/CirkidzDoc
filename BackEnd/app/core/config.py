@@ -31,6 +31,21 @@ class Settings(BaseSettings):
     )
     database_echo: bool = Field(default=False)
     results_root_relative: Path = Field(default=Path("results"))
+    render_tmp_dir_relative: Path = Field(default=Path("../infra/tmp"))
+    render_output_dir_relative: Path = Field(default=Path("../infra/output"))
+    toolkit_compose_file: Path | None = Field(default=Path("../infra/docker-compose.yml"))
+    toolkit_service_name: str = Field(default="toolkit")
+    toolkit_tmp_dir: str = Field(default="/workspace/tmp")
+    toolkit_output_dir: str = Field(default="/workspace/output")
+    use_toolkit_container: bool = Field(default=True)
+    toolkit_commands: tuple[str, ...] = Field(
+        default=(
+            "libreoffice",
+            "pandoc",
+            "qpdf",
+            "gs",
+        )
+    )
     dependency_commands: tuple[str, ...] = Field(
         default=(
             "pandoc",
@@ -70,6 +85,32 @@ class Settings(BaseSettings):
             path = root
         else:
             path = (BASE_DIR / root).resolve()
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    @computed_field
+    @property
+    def render_tmp_dir(self) -> Path:
+        """
+        Working directory shared with the rendering toolkit container.
+        """
+
+        return self._ensure_directory(self.render_tmp_dir_relative)
+
+    @computed_field
+    @property
+    def render_output_dir(self) -> Path:
+        """
+        Output directory shared with the rendering toolkit container.
+        """
+
+        return self._ensure_directory(self.render_output_dir_relative)
+
+    def _ensure_directory(self, raw: Path) -> Path:
+        if raw.is_absolute():
+            path = raw
+        else:
+            path = (BASE_DIR / raw).resolve()
         path.mkdir(parents=True, exist_ok=True)
         return path
 

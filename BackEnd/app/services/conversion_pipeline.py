@@ -7,7 +7,9 @@ from typing import Iterable
 
 from loguru import logger
 
+from app.core.config import settings
 from app.services.command_runner import CommandExecutionError, CommandRunner
+from app.services.toolkit_bridge import ToolkitPathError, host_to_toolkit_path, run_in_toolkit
 
 
 class ConversionError(RuntimeError):
@@ -89,25 +91,45 @@ class ConversionPipeline:
         return results
 
     def _convert_docx_to_pdf(self, source_docx: Path, workdir: Path) -> Path:
-        if not CommandRunner.is_available("libreoffice"):
-            raise ConversionError("LibreOffice is not available. Please install it and try again.")
-
         output_path = workdir / f"{source_docx.stem}.pdf"
-        try:
-            self.command_runner.run(
-                (
-                    "libreoffice",
-                    "--headless",
-                    "--convert-to",
-                    "pdf:writer_pdf_Export",
-                    source_docx.as_posix(),
-                    "--outdir",
-                    workdir.as_posix(),
-                ),
-                timeout=240,
-            )
-        except CommandExecutionError as exc:
-            raise ConversionError(f"LibreOffice failed to convert to PDF: {exc}") from exc
+
+        if settings.use_toolkit_container:
+            try:
+                run_in_toolkit(
+                    self.command_runner,
+                    (
+                        "libreoffice",
+                        "--headless",
+                        "--convert-to",
+                        "pdf:writer_pdf_Export",
+                        host_to_toolkit_path(source_docx),
+                        "--outdir",
+                        host_to_toolkit_path(workdir),
+                    ),
+                    timeout=240,
+                )
+            except ToolkitPathError as exc:
+                raise ConversionError(str(exc)) from exc
+            except CommandExecutionError as exc:
+                raise ConversionError(f"LibreOffice (toolkit) failed to convert to PDF: {exc}") from exc
+        else:
+            if not CommandRunner.is_available("libreoffice"):
+                raise ConversionError("LibreOffice is not available. Please install it and try again.")
+            try:
+                self.command_runner.run(
+                    (
+                        "libreoffice",
+                        "--headless",
+                        "--convert-to",
+                        "pdf:writer_pdf_Export",
+                        source_docx.as_posix(),
+                        "--outdir",
+                        workdir.as_posix(),
+                    ),
+                    timeout=240,
+                )
+            except CommandExecutionError as exc:
+                raise ConversionError(f"LibreOffice failed to convert to PDF: {exc}") from exc
 
         if not output_path.exists():
             raise ConversionError("LibreOffice did not produce a PDF file.")
@@ -116,9 +138,6 @@ class ConversionPipeline:
         return output_path
 
     def _convert_docx_with_pandoc(self, source_docx: Path, fmt: str, workdir: Path) -> Path:
-        if not CommandRunner.is_available("pandoc"):
-            raise ConversionError("Pandoc is not available. Please install it and try again.")
-
         ext = "md" if fmt == "markdown" else fmt
         output_path = workdir / f"{source_docx.stem}.{ext}"
         target_writer = {
@@ -128,22 +147,45 @@ class ConversionPipeline:
             "tex": "latex",
         }[fmt]
 
-        try:
-            self.command_runner.run(
-                (
-                    "pandoc",
-                    source_docx.as_posix(),
-                    "-f",
-                    "docx",
-                    "-t",
-                    target_writer,
-                    "-o",
-                    output_path.as_posix(),
-                ),
-                timeout=180,
-            )
-        except CommandExecutionError as exc:
-            raise ConversionError(f"Pandoc failed to convert to {fmt}: {exc}") from exc
+        if settings.use_toolkit_container:
+            try:
+                run_in_toolkit(
+                    self.command_runner,
+                    (
+                        "pandoc",
+                        host_to_toolkit_path(source_docx),
+                        "-f",
+                        "docx",
+                        "-t",
+                        target_writer,
+                        "-o",
+                        host_to_toolkit_path(output_path),
+                    ),
+                    timeout=180,
+                )
+            except ToolkitPathError as exc:
+                raise ConversionError(str(exc)) from exc
+            except CommandExecutionError as exc:
+                raise ConversionError(f"Pandoc (toolkit) failed to convert to {fmt}: {exc}") from exc
+        else:
+            if not CommandRunner.is_available("pandoc"):
+                raise ConversionError("Pandoc is not available. Please install it and try again.")
+            try:
+                self.command_runner.run(
+                    (
+                        "pandoc",
+                        source_docx.as_posix(),
+                        "-f",
+                        "docx",
+                        "-t",
+                        target_writer,
+                        "-o",
+                        output_path.as_posix(),
+                    ),
+                    timeout=180,
+                )
+            except CommandExecutionError as exc:
+                raise ConversionError(f"Pandoc failed to convert to {fmt}: {exc}") from exc
 
         if not output_path.exists():
             raise ConversionError(f"Pandoc did not produce a {fmt} file.")

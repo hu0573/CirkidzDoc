@@ -8,7 +8,9 @@ import pikepdf
 from loguru import logger
 from pdfrw import PdfDict, PdfName, PdfReader, PdfString, PdfWriter
 
+from app.core.config import settings
 from app.services.command_runner import CommandRunner, CommandExecutionError
+from app.services.toolkit_bridge import ToolkitPathError, host_to_toolkit_path, run_in_toolkit
 
 
 PDF_CHECKBOX_ON = PdfName("Yes")
@@ -84,21 +86,46 @@ class PdfRenderService:
         return template_pdf
 
     def _flatten(self, pdf_path: Path) -> None:
-        if not CommandRunner.is_available("qpdf"):
+        temp_output = pdf_path.with_suffix(".flatten.tmp.pdf")
+        if settings.use_toolkit_container:
+            try:
+                run_in_toolkit(
+                    self.command_runner,
+                    (
+                        "qpdf",
+                        "--flatten-annotations=print",
+                        host_to_toolkit_path(pdf_path),
+                        host_to_toolkit_path(temp_output),
+                    ),
+                    timeout=120,
+                )
+            except ToolkitPathError as exc:
+                logger.warning("qpdf flatten skipped: {error}", error=exc)
+                return
+            except CommandExecutionError as exc:
+                logger.error("qpdf flatten failed inside toolkit: {error}", error=exc)
+                temp_output.unlink(missing_ok=True)
+                return
+        elif not CommandRunner.is_available("qpdf"):
             logger.warning("qpdf is unavailable; cannot flatten annotations.")
             return
-
-        temp_output = pdf_path.with_suffix(".flatten.tmp.pdf")
-        self.command_runner.run(
-            (
-                "qpdf",
-                "--flatten-annotations=print",
-                pdf_path.as_posix(),
-                temp_output.as_posix(),
-            ),
-            timeout=120,
-        )
-        temp_output.replace(pdf_path)
+        else:
+            try:
+                self.command_runner.run(
+                    (
+                        "qpdf",
+                        "--flatten-annotations=print",
+                        pdf_path.as_posix(),
+                        temp_output.as_posix(),
+                    ),
+                    timeout=120,
+                )
+            except CommandExecutionError as exc:
+                logger.error("qpdf flatten failed: {error}", error=exc)
+                temp_output.unlink(missing_ok=True)
+                return
+        if temp_output.exists():
+            temp_output.replace(pdf_path)
 
     def _apply_pdfa(self, pdf_path: Path) -> None:
         try:
@@ -107,8 +134,33 @@ class PdfRenderService:
                 pdf.save(pdf_path)
         except (pikepdf.PdfError, AttributeError) as exc:
             logger.warning("pikepdf PDF/A conversion failed: {error}", error=exc)
-            if CommandRunner.is_available("gs"):
-                temp_output = pdf_path.with_suffix(".pdfa.tmp.pdf")
+            temp_output = pdf_path.with_suffix(".pdfa.tmp.pdf")
+
+            if settings.use_toolkit_container:
+                try:
+                    run_in_toolkit(
+                        self.command_runner,
+                        (
+                            "gs",
+                            "-dPDFA=2",
+                            "-dBATCH",
+                            "-dNOPAUSE",
+                            "-sColorConversionStrategy=UseDeviceIndependentColor",
+                            "-sDEVICE=pdfwrite",
+                            "-dPDFACompatibilityPolicy=1",
+                            f"-sOutputFile={host_to_toolkit_path(temp_output)}",
+                            host_to_toolkit_path(pdf_path),
+                        ),
+                        timeout=180,
+                    )
+                    temp_output.replace(pdf_path)
+                except ToolkitPathError as path_error:
+                    logger.error("Ghostscript PDF/A skipped due to path error: {error}", error=path_error)
+                    temp_output.unlink(missing_ok=True)
+                except CommandExecutionError as gs_error:
+                    logger.error("Ghostscript PDF/A conversion failed in toolkit: {error}", error=gs_error)
+                    temp_output.unlink(missing_ok=True)
+            elif CommandRunner.is_available("gs"):
                 try:
                     self.command_runner.run(
                         (
@@ -132,25 +184,55 @@ class PdfRenderService:
                 logger.error("Missing PDF/A conversion tools (pikepdf/ghostscript); skipping.")
 
     def _apply_password(self, pdf_path: Path, password: str) -> None:
-        if not CommandRunner.is_available("qpdf"):
+        temp_output = pdf_path.with_suffix(".encrypt.tmp.pdf")
+        if settings.use_toolkit_container:
+            try:
+                run_in_toolkit(
+                    self.command_runner,
+                    (
+                        "qpdf",
+                        host_to_toolkit_path(pdf_path),
+                        host_to_toolkit_path(temp_output),
+                        "--encrypt",
+                        password,
+                        password,
+                        "256",
+                        "--",
+                    ),
+                    timeout=120,
+                )
+            except ToolkitPathError as exc:
+                logger.warning("qpdf encryption skipped: {error}", error=exc)
+                temp_output.unlink(missing_ok=True)
+                return
+            except CommandExecutionError as exc:
+                logger.error("qpdf encryption failed in toolkit: {error}", error=exc)
+                temp_output.unlink(missing_ok=True)
+                return
+        elif not CommandRunner.is_available("qpdf"):
             logger.warning("qpdf is unavailable; cannot encrypt PDF.")
             return
-
-        temp_output = pdf_path.with_suffix(".encrypt.tmp.pdf")
-        self.command_runner.run(
-            (
-                "qpdf",
-                pdf_path.as_posix(),
-                temp_output.as_posix(),
-                "--encrypt",
-                password,
-                password,
-                "256",
-                "--",
-            ),
-            timeout=120,
-        )
-        temp_output.replace(pdf_path)
+        else:
+            try:
+                self.command_runner.run(
+                    (
+                        "qpdf",
+                        pdf_path.as_posix(),
+                        temp_output.as_posix(),
+                        "--encrypt",
+                        password,
+                        password,
+                        "256",
+                        "--",
+                    ),
+                    timeout=120,
+                )
+            except CommandExecutionError as exc:
+                logger.error("qpdf encryption failed: {error}", error=exc)
+                temp_output.unlink(missing_ok=True)
+                return
+        if temp_output.exists():
+            temp_output.replace(pdf_path)
 
     def render(
         self,
