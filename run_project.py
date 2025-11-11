@@ -100,6 +100,44 @@ def ensure_toolkit_image(compose_file: Path) -> None:
     subprocess.run(build_command, cwd=str(INFRA_DIR), check=True)
 
 
+def ensure_npm_available() -> None:
+    if which("npm") is None:
+        raise RuntimeError("npm is not available. Please install Node.js and ensure the `npm` command is usable.")
+
+
+def run_npm_install(frontend_dir: Path, args: List[str]) -> None:
+    command = ["npm", "install", *args]
+    print(f"[RUN] {' '.join(command)} (cwd={frontend_dir})")
+    subprocess.run(command, cwd=str(frontend_dir), check=True)
+
+
+def ensure_frontend_dependencies() -> None:
+    ensure_npm_available()
+
+    node_modules_dir = FRONTEND_DIR / "node_modules"
+    tailwind_dir = node_modules_dir / "tailwindcss"
+    tailwind_vite_dir = node_modules_dir / "@tailwindcss" / "vite"
+
+    if not node_modules_dir.exists():
+        print("[DEPENDENCY] Frontend node_modules missing. Running npm install.")
+        run_npm_install(FRONTEND_DIR, [])
+    else:
+        package_lock = FRONTEND_DIR / "package-lock.json"
+        if not package_lock.exists():
+            print("[DEPENDENCY] package-lock.json missing; running npm install to ensure dependencies.")
+            run_npm_install(FRONTEND_DIR, [])
+
+    missing_tailwind_pkgs = []
+    if not tailwind_dir.exists():
+        missing_tailwind_pkgs.append("tailwindcss")
+    if not tailwind_vite_dir.exists():
+        missing_tailwind_pkgs.append("@tailwindcss/vite")
+
+    if missing_tailwind_pkgs:
+        print(f"[DEPENDENCY] Missing tailwind packages: {', '.join(missing_tailwind_pkgs)}. Installing.")
+        run_npm_install(FRONTEND_DIR, missing_tailwind_pkgs)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Launch the CirkidzDoc frontend and backend development environment.")
     group = parser.add_mutually_exclusive_group()
@@ -143,6 +181,15 @@ def main() -> int:
         processes.append(ManagedProcess("Backend FastAPI", backend_cmd, BACKEND_DIR))
 
     if start_frontend:
+        try:
+            ensure_frontend_dependencies()
+        except RuntimeError as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        except subprocess.CalledProcessError as exc:
+            print(f"[ERROR] Failed to install frontend dependencies: {exc}")
+            return 1
+
         frontend_cmd = ["npm", "run", "dev"]
         if args.frontend_host:
             frontend_cmd.extend(["--", "--host", args.frontend_host])
