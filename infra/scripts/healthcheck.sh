@@ -3,6 +3,10 @@ set -euo pipefail
 
 echo "[healthcheck] 开始依赖探测..."
 
+# 为 unoconv/pyuno 预设路径，避免 Python 3.11 缺少 dist-packages
+export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH:-}"
+export UNO_PATH="${UNO_PATH:-/usr/lib/libreoffice/program}"
+
 declare -a CHECKS=(
   "python3.11 --version"
   "pandoc --version"

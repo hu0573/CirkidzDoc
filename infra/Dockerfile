@@ -28,6 +28,7 @@ RUN apt-get update \
         imagemagick \
         libreoffice \
         libreoffice-java-common \
+        python3-uno \
         libffi-dev \
         libjpeg-dev \
         libopenjp2-7 \
@@ -61,21 +62,18 @@ ENV LANG=en_US.UTF-8 \
 
 FROM base AS deps-builder
 
-RUN python3.11 -m pip install --no-cache-dir uv
-
 WORKDIR /opt/requirements
 COPY infra/python/requirements.txt /opt/requirements/requirements.txt
-RUN uv pip download \
-        --python 3.11 \
-        --target /opt/requirements/wheels \
+RUN mkdir -p /opt/requirements/wheels \
+    && python3.11 -m pip download \
+        --dest /opt/requirements/wheels \
         --requirement /opt/requirements/requirements.txt
 
 FROM base AS runtime
 
 COPY --from=deps-builder /opt/requirements /opt/requirements
 
-RUN python3.11 -m pip install --no-cache-dir uv \
-    && python3.11 -m venv /opt/venv \
+RUN python3.11 -m venv /opt/venv \
     && /opt/venv/bin/pip install --no-cache-dir --upgrade pip \
     && /opt/venv/bin/pip install --no-index --find-links=/opt/requirements/wheels \
         -r /opt/requirements/requirements.txt \
