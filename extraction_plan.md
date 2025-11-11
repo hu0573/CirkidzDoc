@@ -11,36 +11,42 @@
   - [ ] 汇总 docassemble 模板/格式能力，形成依赖矩阵草稿。
   - [ ] 定义模板元数据结构、字段类型映射与校验规则。
   - [ ] 编写《需求规格说明.md》，存档至 `docs/`.
-  - [ ] 编写《技术调研报告.md》，覆盖依赖安装方式与替代方案。
+  - [ ] 编写《技术调研报告.md》，覆盖 docassemble 依赖安装方式、版本对齐策略与调试指南。
   - [ ] 制定《系统设计蓝图.md》，总结整体架构与关键决策。
-- [ ] **任务组 2：后端基础设施**
+- [ ] **任务组 2：镜像构建与环境对齐**
+  - [ ] 明确 docassemble 同源容器镜像的构建计划与 PoC，沉淀镜像组件清单。
+  - [ ] 编写与 ReferenceProjects/docassemble 对齐的多阶段 Dockerfile，并完成基础镜像构建与版本校验。
+  - [ ] 配置 `docker-compose.yml` / Dev Container，集成 `make render-sample`、`make healthcheck` 等脚本验证 Pandoc、LibreOffice、ImageMagick 可用性。
+  - [ ] 撰写《镜像使用与调试手册.md》，记录依赖版本、构建流程与常见问题排查。
+- [ ] **任务组 3：后端基础设施**
   - [ ] 初始化 FastAPI 项目骨架，配置 Pydantic 模型与路由框架。
   - [ ] 建立模板目录结构与加载缓存机制，提供示例模板元数据。
-  - [ ] 配置 Dockerfile/Dev Container、Makefile/justfile，固化开发环境。
+  - [ ] 引入 `uv` 管理 Python 依赖，生成锁文件并制定依赖更新流程。
+  - [ ] 配置 Makefile/justfile，固化开发环境并复用镜像健康检查脚本。
   - [ ] 引入配置管理、日志基线，完成《后端环境配置说明.md》。
-- [ ] **任务组 3：后端渲染与转换能力**
+- [ ] **任务组 4：后端渲染与转换能力**
   - [ ] 实现 DOCX 渲染服务，覆盖图片、条件逻辑等场景。
   - [ ] 实现 PDF 表单填充与导出，处理扁平化、PDF/A 选项。
   - [ ] 构建 `ConversionPipeline`，串联 docx → pdf → {html, rtf, tex, md} 转换。
   - [ ] 集成 Pandoc/LibreOffice 等外部工具健康检查与降级策略。
   - [ ] 为渲染与转换核心模块编写单元测试，记录至《后端渲染测试说明.md》。
-- [ ] **任务组 4：后端任务编排与接口**
+- [ ] **任务组 5：后端任务编排与接口**
   - [ ] 设计并迁移数据库表结构（templates、tasks、task_results 等）。
   - [ ] 实现任务创建、进度更新、状态查询 API，支持 BackgroundTasks 抽象。
   - [ ] 完成结果文件归档、过期清理、下载 token 管理。
   - [ ] 提供格式与高级选项查询、模板详情等接口。
-  - [ ] 写作《后端 API 使用说明.md》，涵盖认证、错误码与示例。
-- [ ] **任务组 5：前端实现与交互**
-  - [ ] 封装 Axios API 客户端，处理鉴权占位、错误拦截、文件下载。
+  - [ ] 写作《后端 API 使用说明.md》，涵盖接口约定、错误码与示例。
+- [ ] **任务组 6：前端实现与交互**
+  - [ ] 封装 Axios API 客户端，处理错误拦截、文件下载与通用请求配置。
   - [ ] 构建模板列表、预览与说明界面，串联后端模板接口。
   - [ ] 实现元数据驱动的动态表单，支持多字段类型与校验提示。
   - [ ] 实现输出格式与高级选项配置组件，联动任务提交。
   - [ ] 构建任务状态、下载管理与错误重试体验。
   - [ ] 整理《前端组件与状态管理指南.md》，沉淀复用规范。
-- [ ] **任务组 6：综合验证与交付**
+- [ ] **任务组 7：综合验证与交付**
   - [ ] 执行前后端单元、集成、E2E 测试，生成《测试报告.md》。
   - [ ] 完成 K6/JMeter 性能压测与监控验证，形成《性能基线报告.md》。
-  - [ ] 进行安全、兼容性与大文件场景验证，更新《安全评估清单.md》。
+  - [ ] 完成兼容性与大文件场景验证，记录异常案例与解决方案。
   - [ ] 完成部署资产（Docker Compose、Helm Chart 等）并撰写 `deploy/README.md`。
   - [ ] 组织内部验收与知识分享，记录《交付复盘纪要.md》，列出后续迭代清单。
 
@@ -70,8 +76,8 @@
   - 触发生成任务，展示进度/状态。
   - 生成完成后提供下载按钮，可一次下载多种格式（组合打包或单个）。
   - 提供错误提示与重试机制。
-- **鉴权占位**：
-  - MVP 阶段使用基础 API Key 或占位鉴权提示，预留登录态与权限控制入口，便于后续扩展 OAuth/JWT。
+- **鉴权说明**：
+  - 本阶段不引入任何鉴权或安全策略，所有接口假设在受信网络内部使用。
 
 ### 后端（Python, 推荐 FastAPI）
 - 接收模板标识与字段 JSON，调度 DOCX/PDF 填充流程。
@@ -83,12 +89,12 @@
 - **前端实现**：
   - 组件：模板库、字段表单、输出格式选择器、任务状态展示、下载列表、设置面板、错误提示。
   - 状态管理：首阶段使用 React Query + 本地状态；若业务复杂度提升，再引入 Zustand。表单状态需与任务状态分离，避免重复请求。
-  - API 对接：使用 Axios 封装统一客户端，集中处理鉴权头、错误拦截、文件上传（multipart/form-data）与结果下载（Blob + FileSaver）。
+  - API 对接：使用 Axios 封装统一客户端，集中处理错误拦截、文件上传（multipart/form-data）与结果下载（Blob + FileSaver）。
   - UI 规范：Tailwind + Headless UI 构建组件，预置主题、暗色模式、响应式布局；输出格式、多选列表、进度条等组件可复用。
   - 可扩展性：预留国际化（i18n）与可访问性（a11y）钩子，所有文案集中管理，表单控件符合键盘可达要求。
 - **后端实现**：
   - 框架：FastAPI + Pydantic v2 数据模型，运行于 Uvicorn/Gunicorn；按功能拆分 Router，提供 OpenAPI 文档。
-  - 核心依赖：`docxtpl`、`python-docx`、`docxcompose`、`pikepdf`、`xfdfgen`、`pdftk`、`qpdf`、ImageMagick、Pandoc、LibreOffice（或 `unoconv`）。
+  - 核心依赖：与 ReferenceProjects/docassemble 环境保持一致，包含 `docxtpl`、`python-docx`、`docxcompose`、`pikepdf`、`xfdfgen`、`pdftk`、`qpdf`、ImageMagick、Pandoc、LibreOffice、`unoconv` 等全量组件。
   - 模板管理：模板目录结构为 `templates/<template_id>/`，包含主模板、静态资源与 `metadata.json`；后端通过缓存服务（如 `functools.lru_cache` 或 Redis）提升读取效率。
   - 转换流程：构建 `ConversionPipeline`，支持 docx → pdf → {html, rtf, tex, md} 链路；根据目标格式动态组合 Pandoc、LibreOffice、ImageMagick 调用，统一错误处理。
   - 外部依赖监测：在服务启动与定期巡检中检测 Pandoc/LibreOffice 等命令可用性，提供降级策略（例如仅返回原始 DOCX）与报警机制。
@@ -167,11 +173,6 @@
 - 外部工具超时：设置 120 秒超时与资源限制，超时后中止进程并提示用户重试。
 - 结果存储失败：回滚任务状态并推送告警。
 
-### 安全策略
-- 模板与上传文件存储隔离，限制读写权限。
-- 上传附件（如果启用）需校验类型、限制大小、可接入杀毒或沙箱。
-- API 支持基础鉴权（API Key/JWT），生产环境启用 HTTPS 与速率限制。
-
 ## 数据模型与接口契约
 - **数据库表**（以 Postgres 为例）：
   - `templates`：`id`, `name`, `description`, `version`, `entry`, `config_hash`, `status`, `created_at`, `updated_at`.
@@ -198,11 +199,20 @@
 
 ## 环境与工具链
 - **开发环境**：Python 3.11、Node.js 20、pnpm；提供 Dev Container 或 `Makefile/justfile` 简化命令。
+- **Python 依赖管理**：采用 `uv` 统一创建虚拟环境与锁定依赖，配套 `uv pip sync` 与 `uv lock --upgrade` 流程。
+- **容器镜像策略**：
+  - 使用与 ReferenceProjects/docassemble 同源的 Ubuntu 基础镜像与依赖安装脚本，确保 Pandoc、LibreOffice、ImageMagick、`unoconv`、`pdftk` 等工具版本一致。
+  - 通过多阶段 Dockerfile 构建，将重量级依赖安装与应用代码分层缓存；基础镜像在构建阶段完成全部 docassemble 依赖安装并清理缓存。
+  - 提供 `docker-compose.yml`，聚合 FastAPI、前端、Redis（如需）及渲染依赖服务，一键启动开发环境；配套 `make build`、`make up`、`make render-sample` 等脚本做健康检查。
+  - 在容器启动脚本中执行 `pandoc --version`、`soffice --headless --version` 等探测，并暴露 `/health/deps` 接口，支持故障排查。
+- **本地调试指引**：
+  - `docs/技术调研报告.md` 集中记录 docassemble 依赖栈的安装流程、版本比对、常见问题及与 ReferenceProjects/docassemble 的对齐矩阵。
+  - 通过预置 `make render-sample`、`make healthcheck` 等脚本验证 Pandoc、LibreOffice、ImageMagick 可用性，确保本地行为与 docassemble 实例一致。
 - **CI/CD**：GitHub Actions/GitLab CI，包含 lint、测试、构建、集成测试、镜像推送等流程。
 - **质量保障**：
   - 前端：ESLint、Prettier、Stylelint、Vitest、React Testing Library。
   - 后端：Ruff、Mypy、Pytest、Coverage、Bandit。
-  - 依赖安全：Dependabot/Snyk 定期扫描。
+  - 依赖更新：Dependabot 定期检查版本。
 
 ## 流程管理与协作
 - 使用看板工具（Jira/Linear）跟踪需求、任务、缺陷；每周例会同步进展与风险。
@@ -226,11 +236,10 @@
 - **模板兼容性**：提供模板校验工具，覆盖常见场景；引入示例库进行回归测试。
 - **性能瓶颈**：任务调度引入并发控制、限流、缓存；必要时拆分渲染与转换阶段，并明确吞吐量/时延指标用于验收。
 - **资源限制**：对 Pandoc、LibreOffice 等外部命令设置容器 CPU/内存配额与执行超时，结合监控报警防止资源耗尽。
-- **安全性**：限制文件上传、隔离执行环境、审计日志；后续迭代接入身份认证。
 - **前端字段配置**：建立模板字段验证流程，结合自动化测试与人工校验。
 
 ## 后续工作
-- 支持自定义模板上传与版本管理，提供在线模板预览（高优先级，依赖鉴权与模板校验能力完备）。
+- 支持自定义模板上传与版本管理，提供在线模板预览（高优先级，依赖模板校验能力完备）。
 - 引入字段映射可视化工具，帮助业务方编辑模板（中优先级，需要完善字段 DSL）。
 - 集成对象存储（S3/OSS/MinIO）与消息队列提升扩展性。
 - 规划多语言界面、本地化输出支持。
