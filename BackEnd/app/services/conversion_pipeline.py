@@ -63,7 +63,10 @@ class ConversionPipeline:
 
             if fmt == "docx":
                 output_path = workdir / f"{source_docx.stem}.docx"
-                shutil.copyfile(source_docx, output_path)
+                if output_path.resolve() != source_docx.resolve():
+                    shutil.copyfile(source_docx, output_path)
+                else:
+                    output_path = source_docx
                 results.append(ConversionResult(format=original_fmt, output_path=output_path))
                 continue
 

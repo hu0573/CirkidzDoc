@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.db.session import init_database
 
 
 def create_app() -> FastAPI:
@@ -11,6 +12,7 @@ def create_app() -> FastAPI:
     """
 
     configure_logging()
+    init_database()
 
     application = FastAPI(
         title=settings.app_name,

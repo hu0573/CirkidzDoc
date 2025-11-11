@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -77,10 +78,10 @@ class RenderEngine:
         metadata = self.repository.get_template(request.template_id)
         template_path = self._resolve_template_path(metadata)
 
-        with tempfile.TemporaryDirectory(prefix=f"render-{metadata.id}-") as tmp_dir:
-            workdir = Path(tmp_dir)
-            logger.debug("使用工作目录: {workdir}", workdir=workdir.as_posix())
+        workdir = Path(tempfile.mkdtemp(prefix=f"render-{metadata.id}-"))
+        logger.debug("使用工作目录: {workdir}", workdir=workdir.as_posix())
 
+        try:
             if template_path.suffix.lower() == ".docx":
                 docx_output = workdir / f"{metadata.id}.docx"
                 self.docx_renderer.render(metadata, request.data, output_path=docx_output)
@@ -90,10 +91,7 @@ class RenderEngine:
                     target_formats,
                     workdir=workdir,
                 )
-                return [
-                    RenderOutcome(format=result.format, file_path=result.output_path)
-                    for result in conversions
-                ]
+                return [self._persist_result(result) for result in conversions]
 
             if template_path.suffix.lower() == ".pdf":
                 if request.formats and any(fmt.lower() != "pdf" for fmt in request.formats):
@@ -107,9 +105,22 @@ class RenderEngine:
                     output_path=pdf_output,
                     options=options,
                 )
-                return [RenderOutcome(format="pdf", file_path=pdf_output)]
+                return [self._persist_output("pdf", pdf_output)]
 
             raise ValueError(f"暂不支持的模板类型: {template_path.suffix}")
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+
+    @staticmethod
+    def _persist_result(result: ConversionResult) -> RenderOutcome:
+        return RenderEngine._persist_output(result.format, result.output_path)
+
+    @staticmethod
+    def _persist_output(fmt: str, source: Path) -> RenderOutcome:
+        suffix = source.suffix if source.suffix else f".{fmt}"
+        persistent_path = Path(tempfile.NamedTemporaryFile(delete=False, suffix=suffix).name)
+        shutil.copy2(source, persistent_path)
+        return RenderOutcome(format=fmt, file_path=persistent_path)
 
 
 render_engine = RenderEngine()

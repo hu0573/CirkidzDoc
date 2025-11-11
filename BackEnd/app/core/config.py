@@ -24,8 +24,13 @@ class Settings(BaseSettings):
     app_version: str = Field(default="0.1.0")
     environment: str = Field(default="development")
     log_level: str = Field(default="INFO")
-    template_root_relative: Path = Field(default=Path("BackEnd/templates"))
+    template_root_relative: Path = Field(default=Path("templates"))
     task_expiry_minutes: int = Field(default=60)
+    database_url: str = Field(
+        default=f"sqlite:///{(BASE_DIR / 'BackEnd' / 'data' / 'backend.db').resolve()}",
+    )
+    database_echo: bool = Field(default=False)
+    results_root_relative: Path = Field(default=Path("results"))
     dependency_commands: tuple[str, ...] = Field(
         default=(
             "pandoc",
@@ -46,6 +51,21 @@ class Settings(BaseSettings):
         if self.template_root_relative.is_absolute():
             return self.template_root_relative
         return (BASE_DIR / self.template_root_relative).resolve()
+
+    @computed_field
+    @property
+    def results_root(self) -> Path:
+        """
+        任务结果落盘目录。
+        """
+
+        root = self.results_root_relative
+        if root.is_absolute():
+            path = root
+        else:
+            path = (BASE_DIR / root).resolve()
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
 
 @lru_cache(maxsize=1)
