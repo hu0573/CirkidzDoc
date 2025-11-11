@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-一键启动 CirkidzDoc 前后端开发环境的脚本。
+Launch the CirkidzDoc frontend and backend development environment.
 
-- 默认启动 FastAPI 后端与前端 Vite 开发服务器。
-- 可选启动渲染工具链 Docker（infra/toolkit）。
+- Start the FastAPI backend and Vite frontend development servers by default.
+- Ensure the Docker CLI is available and the `cirkidzdoc/toolkit:dev` image exists;
+  run `docker compose build` to build the rendering toolkit image if missing.
 
-使用示例：
-    python run_project.py                 # 启动后端 + 前端 + 渲染工具链 Docker
-    python run_project.py --backend-only  # 仅后端（仍会启动渲染工具链 Docker）
-    python run_project.py --frontend-only # 仅前端（仍会启动渲染工具链 Docker）
+Usage:
+    python run_project.py                 # Start backend + frontend + rendering toolkit Docker
+    python run_project.py --backend-only  # Backend only (still starts the rendering toolkit Docker)
+    python run_project.py --frontend-only # Frontend only (still starts the rendering toolkit Docker)
 
-按 Ctrl+C 终止，脚本会尝试优雅关闭所有子进程。
+Press Ctrl+C to terminate; the script will attempt to shut down all subprocesses gracefully.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ import os
 import signal
 import subprocess
 import sys
+from shutil import which
 from pathlib import Path
 from typing import List, Optional
 
@@ -39,7 +41,7 @@ class ManagedProcess:
         self.proc: Optional[subprocess.Popen[bytes]] = None
 
     def start(self) -> None:
-        print(f"[启动] {self.name}: {' '.join(self.command)} (cwd={self.cwd})")
+        print(f"[START] {self.name}: {' '.join(self.command)} (cwd={self.cwd})")
         self.proc = subprocess.Popen(
             self.command,
             cwd=str(self.cwd),
@@ -53,17 +55,19 @@ class ManagedProcess:
             return
         if self.proc.poll() is not None:
             return
-        print(f"[停止] {self.name}")
+        print(f"[STOP] {self.name}")
         try:
             self.proc.send_signal(signal.SIGINT)
             self.proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            print(f"[警告] {self.name} 未在 10 秒内退出，尝试强制结束。")
+            print(f"[WARN] {self.name} did not exit within 10 seconds, attempting to kill it.")
             self.proc.kill()
 
 
 def run_docker_toolkit(detach: bool) -> subprocess.CompletedProcess[bytes]:
     compose_file = INFRA_DIR / "docker-compose.yml"
+    ensure_docker_available()
+    ensure_toolkit_image(compose_file)
     command = [
         "docker",
         "compose",
@@ -75,18 +79,35 @@ def run_docker_toolkit(detach: bool) -> subprocess.CompletedProcess[bytes]:
     if detach:
         command.insert(-1, "-d")
 
-    print(f"[启动] Docker toolkit: {' '.join(command)}")
+    print(f"[START] Docker toolkit: {' '.join(command)}")
     return subprocess.run(command, cwd=str(INFRA_DIR), check=True)
 
 
+def ensure_docker_available() -> None:
+    if which("docker") is None:
+        raise RuntimeError("Docker is not available. Please install it and ensure the `docker` command is usable.")
+
+
+def ensure_toolkit_image(compose_file: Path) -> None:
+    target_image = "cirkidzdoc/toolkit:dev"
+    inspect_command = ["docker", "image", "inspect", target_image]
+    result = subprocess.run(inspect_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode == 0:
+        return
+
+    print(f"[BUILD] Image {target_image} not found. Running docker compose build.")
+    build_command = ["docker", "compose", "-f", str(compose_file), "build", "toolkit"]
+    subprocess.run(build_command, cwd=str(INFRA_DIR), check=True)
+
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="启动 CirkidzDoc 前后端开发环境")
+    parser = argparse.ArgumentParser(description="Launch the CirkidzDoc frontend and backend development environment.")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--backend-only", action="store_true", help="仅启动后端服务")
-    group.add_argument("--frontend-only", action="store_true", help="仅启动前端服务")
-    parser.add_argument("--backend-host", default="0.0.0.0", help="后端监听地址，默认 0.0.0.0")
-    parser.add_argument("--backend-port", default="8000", help="后端监听端口，默认 8000")
-    parser.add_argument("--frontend-host", default=None, help="前端监听地址，传递给 Vite，例如 0.0.0.0")
+    group.add_argument("--backend-only", action="store_true", help="Start only the backend service.")
+    group.add_argument("--frontend-only", action="store_true", help="Start only the frontend service.")
+    parser.add_argument("--backend-host", default="0.0.0.0", help="Backend listen address, defaults to 0.0.0.0.")
+    parser.add_argument("--backend-port", default="8000", help="Backend listen port, defaults to 8000.")
+    parser.add_argument("--frontend-host", default=None, help="Frontend listen address passed to Vite, e.g. 0.0.0.0.")
     return parser.parse_args()
 
 
@@ -100,8 +121,11 @@ def main() -> int:
 
     try:
         run_docker_toolkit(detach=True)
+    except RuntimeError as exc:
+        print(f"[ERROR] {exc}")
+        return 1
     except subprocess.CalledProcessError as exc:
-        print(f"[错误] 启动 toolkit 失败：{exc}")
+        print(f"[ERROR] Failed to start toolkit: {exc}")
         return 1
 
     if start_backend:
@@ -116,23 +140,23 @@ def main() -> int:
             "--port",
             args.backend_port,
         ]
-        processes.append(ManagedProcess("后端 FastAPI", backend_cmd, BACKEND_DIR))
+        processes.append(ManagedProcess("Backend FastAPI", backend_cmd, BACKEND_DIR))
 
     if start_frontend:
         frontend_cmd = ["npm", "run", "dev"]
         if args.frontend_host:
             frontend_cmd.extend(["--", "--host", args.frontend_host])
-        processes.append(ManagedProcess("前端 Vite", frontend_cmd, FRONTEND_DIR))
+        processes.append(ManagedProcess("Frontend Vite", frontend_cmd, FRONTEND_DIR))
 
     if not processes:
-        print("[提示] 未选择任何服务，请使用 --backend-only / --frontend-only / 默认启动。")
+        print("[HINT] No service selected. Use --backend-only / --frontend-only / default to start something.")
         return 0
 
     for proc in processes:
         proc.start()
 
     def handle_signal(signum, frame):  # type: ignore[override]
-        print(f"\n[信号] 收到 {signum}，开始清理。")
+        print(f"\n[SIGNAL] Received {signum}. Cleaning up.")
         for p in processes:
             p.stop()
         sys.exit(0)
@@ -144,15 +168,15 @@ def main() -> int:
         while True:
             for proc in processes:
                 if proc.proc and proc.proc.poll() is not None:
-                    raise RuntimeError(f"{proc.name} 提前退出，返回码 {proc.proc.returncode}")
+                    raise RuntimeError(f"{proc.name} exited early with return code {proc.proc.returncode}")
             signal.pause()
     except RuntimeError as err:
-        print(f"[错误] {err}")
+        print(f"[ERROR] {err}")
         for p in processes:
             p.stop()
         return 1
     except KeyboardInterrupt:
-        print("\n[信号] 收到 Ctrl+C，开始清理。")
+        print("\n[SIGNAL] Received Ctrl+C. Cleaning up.")
         for p in processes:
             p.stop()
         return 0

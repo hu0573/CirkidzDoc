@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, declared_attr
 
 class Base(DeclarativeBase):
     """
-    SQLAlchemy Declarative 基类，统一表命名约定。
+    SQLAlchemy declarative base with a unified table naming convention.
     """
 
     __abstract__ = True

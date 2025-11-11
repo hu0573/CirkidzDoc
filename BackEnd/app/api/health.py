@@ -19,10 +19,10 @@ class HealthResponse(BaseModel):
     dependencies: dict[str, bool]
 
 
-@router.get("/health", summary="健康检查", tags=["health"])
+@router.get("/health", summary="Health check", tags=["health"])
 def health_check() -> HealthResponse:
     """
-    返回服务健康状态与关键信息。
+    Return the service health status along with key information.
     """
 
     dependencies = {

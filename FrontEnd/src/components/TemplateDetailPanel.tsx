@@ -100,7 +100,7 @@ export function TemplateDetailPanel({
       {},
       field.required
         ? {
-            required: `${field.label} 为必填项`,
+            required: `${field.label} is required`,
           }
         : {},
       field.validation?.pattern
@@ -109,7 +109,7 @@ export function TemplateDetailPanel({
               return {
                 pattern: {
                   value: new RegExp(field.validation?.pattern),
-                  message: buildValidationMessage(field, '格式不正确'),
+                  message: buildValidationMessage(field, ' has an invalid format'),
                 },
               }
             } catch {
@@ -121,7 +121,7 @@ export function TemplateDetailPanel({
         ? {
             minLength: {
               value: field.validation.min_length,
-              message: buildValidationMessage(field, `至少需要 ${field.validation.min_length} 个字符`),
+              message: buildValidationMessage(field, ` must be at least ${field.validation.min_length} characters long`),
             },
           }
         : {},
@@ -129,7 +129,7 @@ export function TemplateDetailPanel({
         ? {
             maxLength: {
               value: field.validation.max_length,
-              message: buildValidationMessage(field, `最多允许 ${field.validation.max_length} 个字符`),
+              message: buildValidationMessage(field, ` must be at most ${field.validation.max_length} characters long`),
             },
           }
         : {},
@@ -137,7 +137,7 @@ export function TemplateDetailPanel({
         ? {
             min: {
               value: field.validation.minimum,
-              message: buildValidationMessage(field, `不能小于 ${field.validation.minimum}`),
+              message: buildValidationMessage(field, ` cannot be less than ${field.validation.minimum}`),
             },
           }
         : {},
@@ -145,7 +145,7 @@ export function TemplateDetailPanel({
         ? {
             max: {
               value: field.validation.maximum,
-              message: buildValidationMessage(field, `不能大于 ${field.validation.maximum}`),
+              message: buildValidationMessage(field, ` cannot be greater than ${field.validation.maximum}`),
             },
           }
         : {},
@@ -168,7 +168,7 @@ export function TemplateDetailPanel({
       if (field.required) {
         setFileErrors((prev) => ({
           ...prev,
-          [field.name]: `${field.label} 为必填项`,
+          [field.name]: `${field.label} is required`,
         }))
       }
       return
@@ -177,7 +177,7 @@ export function TemplateDetailPanel({
     if (file.size > 20 * 1024 * 1024) {
       setFileErrors((prev) => ({
         ...prev,
-        [field.name]: `${field.label} 文件过大，请控制在 20MB 内`,
+        [field.name]: `${field.label} is too large. Please keep the file within 20MB.`,
       }))
       return
     }
@@ -199,7 +199,7 @@ export function TemplateDetailPanel({
       return
     }
     if (!selectedFormats.length) {
-      setFormatsError('请至少选择一种输出格式')
+      setFormatsError('Please select at least one output format.')
       return
     }
     setFormatsError(null)
@@ -214,7 +214,7 @@ export function TemplateDetailPanel({
           if (field.required) {
             setFileErrors((prev) => ({
               ...prev,
-              [field.name]: `${field.label} 为必填项`,
+              [field.name]: `${field.label} is required`,
             }))
             hasFileError = true
           }
@@ -232,7 +232,7 @@ export function TemplateDetailPanel({
 
       if (value === undefined || value === null || value === '') {
         if (field.required) {
-          setError(field.name, { type: 'required', message: `${field.label} 为必填项` })
+          setError(field.name, { type: 'required', message: `${field.label} is required` })
           hasFileError = true
         }
         continue
@@ -374,7 +374,7 @@ export function TemplateDetailPanel({
               disabled={isSubmitting}
               {...register(field.name, buildRegisterOptions(field))}
             >
-              <option value="">{field.placeholder ?? '请选择'}</option>
+              <option value="">{field.placeholder ?? 'Please select'}</option>
               {field.options?.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -412,12 +412,12 @@ export function TemplateDetailPanel({
               onChange={(event) => void handleFileChange(field, event.target.files)}
             />
             <p className="text-xs text-slate-500">
-              文件将以 Base64 形式直接提交，请确保文件大小适中。
+              Files are submitted as Base64. Please ensure the file size is reasonable.
             </p>
             {fileStates[field.name]?.file ? (
               <p className="text-xs text-slate-500">
-                已选择：{fileStates[field.name]?.file?.name}（
-                {Math.round((fileStates[field.name]?.file?.size ?? 0) / 1024)} KB）
+                Selected: {fileStates[field.name]?.file?.name} (
+                {Math.round((fileStates[field.name]?.file?.size ?? 0) / 1024)} KB)
               </p>
             ) : null}
             {errorMessage ? <p className="text-xs text-red-600">{errorMessage}</p> : null}
@@ -428,7 +428,7 @@ export function TemplateDetailPanel({
           <div key={field.name} className="space-y-1">
             {commonLabel}
             <p className="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
-              暂不支持字段类型 {field.type}，请联系开发者扩展前端组件。
+              Field type {field.type} is not supported yet. Please contact the team to extend the frontend component.
             </p>
           </div>
         )
@@ -438,7 +438,7 @@ export function TemplateDetailPanel({
   if (!metadata) {
     return (
       <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white">
-        <p className="text-sm text-slate-500">请选择左侧的模板以继续配置字段。</p>
+        <p className="text-sm text-slate-500">Select a template on the left to configure the fields.</p>
       </div>
     )
   }
@@ -452,7 +452,7 @@ export function TemplateDetailPanel({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">{metadata.name}</h2>
-            <p className="text-sm text-slate-500">{metadata.description ?? '暂无模板描述'}</p>
+            <p className="text-sm text-slate-500">{metadata.description ?? 'No template description available.'}</p>
           </div>
           {metadata.version ? (
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
@@ -463,7 +463,7 @@ export function TemplateDetailPanel({
         {metadata.preview ? (
           <img
             src={metadata.preview}
-            alt={`${metadata.name} 预览`}
+            alt={`${metadata.name} preview`}
             className="max-h-48 w-full rounded-lg border border-slate-200 object-cover"
             onError={(event) => {
               const target = event.target as HTMLImageElement
@@ -474,12 +474,12 @@ export function TemplateDetailPanel({
       </div>
 
       <section className="space-y-4">
-        <h3 className="text-base font-semibold text-slate-900">字段填写</h3>
+        <h3 className="text-base font-semibold text-slate-900">Field Input</h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{fields.map((field) => renderField(field))}</div>
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-base font-semibold text-slate-900">输出格式</h3>
+        <h3 className="text-base font-semibold text-slate-900">Output Formats</h3>
         <OutputFormatSelector
           formats={allowedFormats}
           selected={selectedFormats}
@@ -493,7 +493,7 @@ export function TemplateDetailPanel({
         />
         {selectedFormats.includes('pdf') && pdfCapabilities ? (
           <div className="space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4">
-            <h4 className="text-sm font-semibold text-blue-800">PDF 高级选项</h4>
+            <h4 className="text-sm font-semibold text-blue-800">Advanced PDF Options</h4>
             {pdfCapabilities.allow_flatten ? (
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input
@@ -502,7 +502,7 @@ export function TemplateDetailPanel({
                   disabled={isSubmitting}
                   {...register('__pdf_flatten')}
                 />
-                扁平化表单字段
+                Flatten form fields
               </label>
             ) : null}
             {pdfCapabilities.allow_pdfa ? (
@@ -513,22 +513,22 @@ export function TemplateDetailPanel({
                   disabled={isSubmitting}
                   {...register('__pdf_pdfa')}
                 />
-                按 PDF/A 规范导出
+                Export as PDF/A
               </label>
             ) : null}
             {pdfCapabilities.allow_password ? (
               <div className="space-y-1">
                 <label htmlFor="__pdf_password" className="text-sm font-medium text-slate-800">
-                  设置访问密码
+                  Set access password
                 </label>
                 <input
                   id="__pdf_password"
                   type="password"
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                  placeholder="留空则不设置密码"
+                  placeholder="Leave blank to skip the password"
                   disabled={isSubmitting}
                   {...register('__pdf_password', {
-                    minLength: { value: 6, message: '密码至少 6 位' },
+                    minLength: { value: 6, message: 'Password must be at least 6 characters.' },
                   })}
                 />
                 {errors.__pdf_password?.message ? (
@@ -553,14 +553,14 @@ export function TemplateDetailPanel({
           }}
           disabled={isSubmitting}
         >
-          重置
+          Reset
         </button>
         <button
           type="submit"
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-300"
           disabled={isSubmitting}
         >
-          {isSubmitting || formSubmitting ? '提交中...' : '提交渲染任务'}
+          {isSubmitting || formSubmitting ? 'Submitting...' : 'Submit Render Task'}
         </button>
       </div>
     </form>

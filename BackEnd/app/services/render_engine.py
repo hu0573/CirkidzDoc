@@ -25,7 +25,7 @@ class RenderOutcome:
 
 class RenderEngine:
     """
-    协调 DOCX/PDF 渲染与格式转换的统一入口。
+    Unified entry point that orchestrates DOCX/PDF rendering and format conversions.
     """
 
     def __init__(
@@ -79,7 +79,7 @@ class RenderEngine:
         template_path = self._resolve_template_path(metadata)
 
         workdir = Path(tempfile.mkdtemp(prefix=f"render-{metadata.id}-"))
-        logger.debug("使用工作目录: {workdir}", workdir=workdir.as_posix())
+        logger.debug("Using working directory: {workdir}", workdir=workdir.as_posix())
 
         try:
             if template_path.suffix.lower() == ".docx":
@@ -95,7 +95,7 @@ class RenderEngine:
 
             if template_path.suffix.lower() == ".pdf":
                 if request.formats and any(fmt.lower() != "pdf" for fmt in request.formats):
-                    raise ValueError("PDF 模板目前仅支持导出为 PDF 格式")
+                    raise ValueError("PDF templates currently only support exporting to PDF format.")
 
                 pdf_output = workdir / f"{metadata.id}.pdf"
                 options = self._parse_pdf_options(request.options)
@@ -107,7 +107,7 @@ class RenderEngine:
                 )
                 return [self._persist_output("pdf", pdf_output)]
 
-            raise ValueError(f"暂不支持的模板类型: {template_path.suffix}")
+            raise ValueError(f"Unsupported template type: {template_path.suffix}")
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
 

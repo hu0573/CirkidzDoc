@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[healthcheck] 开始依赖探测..."
+echo "[healthcheck] Starting dependency checks..."
 
-# 为 unoconv/pyuno 预设路径，避免 Python 3.11 缺少 dist-packages
+# Preconfigure paths for unoconv/pyuno to avoid missing dist-packages on Python 3.11.
 export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH:-}"
 export UNO_PATH="${UNO_PATH:-/usr/lib/libreoffice/program}"
 
@@ -27,12 +27,12 @@ for check in "${CHECKS[@]}"; do
       exit 1
     fi
   else
-    echo "[healthcheck] 未找到命令：${name}" >&2
+    echo "[healthcheck] Command not found: ${name}" >&2
     exit 1
   fi
 done
 
-# pdftk-java 的 --version 输出到 stderr，单独处理
+# pdftk-java writes --version to stderr, handle separately.
 if command -v pdftk >/dev/null 2>&1; then
   if pdftk --version >/tmp/pdftk.log 2>&1; then
     echo "[healthcheck] pdftk ✓"
@@ -42,7 +42,7 @@ if command -v pdftk >/dev/null 2>&1; then
     exit 1
   fi
 else
-  echo "[healthcheck] 未找到命令：pdftk" >&2
+  echo "[healthcheck] Command not found: pdftk" >&2
   exit 1
 fi
 
@@ -66,11 +66,11 @@ for pkg in packages:
 
 if missing:
     for pkg, err in missing:
-        print(f"[healthcheck] Python 包加载失败: {pkg}: {err}", flush=True)
+        print(f"[healthcheck] Failed to import Python package: {pkg}: {err}", flush=True)
     raise SystemExit(1)
 else:
-    print("[healthcheck] Python 包加载全部通过")
+    print("[healthcheck] All Python package imports succeeded")
 PY
 
-echo "[healthcheck] 所有依赖探测通过 ✅"
+echo "[healthcheck] All dependency checks passed ✅"
 

@@ -13,7 +13,7 @@ from loguru import logger
 
 class CommandExecutionError(RuntimeError):
     """
-    表示外部命令执行失败。
+    Raised when executing an external command fails.
     """
 
     def __init__(self, command: Sequence[str], returncode: int, stdout: str, stderr: str) -> None:
@@ -22,7 +22,7 @@ class CommandExecutionError(RuntimeError):
         self.stdout = stdout
         self.stderr = stderr
         super().__init__(
-            f"命令执行失败（exit={returncode}）：{shlex.join(self.command)}\nstdout:\n{stdout}\nstderr:\n{stderr}"
+            f"Command execution failed (exit={returncode}): {shlex.join(self.command)}\nstdout:\n{stdout}\nstderr:\n{stderr}"
         )
 
 
@@ -36,7 +36,7 @@ class CommandResult:
 
 class CommandRunner:
     """
-    统一管理外部命令调用，封装日志与错误处理。
+    Manage external command invocation with consistent logging and error handling.
     """
 
     def __init__(self, *, env: dict[str, str] | None = None, cwd: Path | None = None) -> None:
@@ -46,7 +46,7 @@ class CommandRunner:
     @staticmethod
     def is_available(command: str) -> bool:
         """
-        检查命令是否存在于 PATH。
+        Check whether the command exists in PATH.
         """
 
         return shutil.which(command) is not None
@@ -62,17 +62,17 @@ class CommandRunner:
         extra_env: dict[str, str] | None = None,
     ) -> CommandResult:
         """
-        执行外部命令，默认捕获输出。
+        Execute an external command, capturing output by default.
         """
 
         if allow_missing and not self.is_available(command[0]):
-            raise FileNotFoundError(f"命令未找到：{command[0]}")
+            raise FileNotFoundError(f"Command not found: {command[0]}")
 
         env = self.env.copy()
         if extra_env:
             env.update(extra_env)
 
-        logger.debug("执行外部命令: {command}", command=shlex.join(command))
+        logger.debug("Executing external command: {command}", command=shlex.join(command))
 
         completed = subprocess.run(
             list(command),
@@ -99,13 +99,13 @@ class CommandRunner:
 
 def ensure_commands_available(commands: Iterable[str]) -> dict[str, bool]:
     """
-    批量检查命令是否存在。
+    Check whether the provided commands exist.
     """
 
     availability: dict[str, bool] = {}
     for command in commands:
         availability[command] = CommandRunner.is_available(command)
-        logger.debug("命令 {command} 是否可用: {available}", command=command, available=availability[command])
+        logger.debug("Command {command} available: {available}", command=command, available=availability[command])
     return availability
 
 

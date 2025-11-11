@@ -12,20 +12,20 @@ from app.models.templates import TemplateMetadata
 
 class TemplateNotFoundError(KeyError):
     """
-    模板不存在时抛出的异常。
+    Raised when the requested template does not exist.
     """
 
 
 def _load_metadata_file(metadata_path: Path) -> TemplateMetadata:
     """
-    将 metadata.json 转换为 TemplateMetadata。
+    Load a metadata.json file and convert it into a TemplateMetadata instance.
     """
 
     with metadata_path.open(encoding="utf-8") as fp:
         payload = json.load(fp)
 
     metadata = TemplateMetadata.model_validate(payload)
-    logger.debug("已加载模板元数据: {template_id}", template_id=metadata.id)
+    logger.debug("Loaded template metadata: {template_id}", template_id=metadata.id)
     return metadata
 
 
@@ -33,7 +33,7 @@ def _build_registry(template_root: Path) -> dict[str, TemplateMetadata]:
     registry: dict[str, TemplateMetadata] = {}
 
     if not template_root.exists():
-        logger.warning("模板目录不存在: {template_root}", template_root=template_root.as_posix())
+        logger.warning("Template directory does not exist: {template_root}", template_root=template_root.as_posix())
         return registry
 
     for metadata_path in template_root.glob("*/metadata.json"):
@@ -41,7 +41,7 @@ def _build_registry(template_root: Path) -> dict[str, TemplateMetadata]:
         registry[metadata.id] = metadata
 
     logger.info(
-        "模板注册表加载完成，共 {count} 个模板",
+        "Template registry loaded with {count} templates",
         count=len(registry),
     )
 
@@ -51,7 +51,7 @@ def _build_registry(template_root: Path) -> dict[str, TemplateMetadata]:
 @lru_cache(maxsize=1)
 def _cached_registry(template_root: str) -> dict[str, TemplateMetadata]:
     """
-    使用 LRU 缓存避免频繁读取磁盘。
+    Cache the template registry with LRU to avoid frequent disk reads.
     """
 
     return _build_registry(Path(template_root))
@@ -59,7 +59,7 @@ def _cached_registry(template_root: str) -> dict[str, TemplateMetadata]:
 
 class TemplateRepository:
     """
-    模板仓库封装，提供查询与缓存刷新能力。
+    Repository wrapper that provides lookup and cache refresh capabilities for templates.
     """
 
     def __init__(self, template_root: Path | None = None) -> None:
@@ -78,12 +78,12 @@ class TemplateRepository:
 
     def refresh(self) -> None:
         """
-        清理缓存，下次读取时重新加载磁盘。
+        Clear the cache so that the next read reloads from disk.
         """
 
         _cached_registry.cache_clear()
-        logger.info("模板缓存已刷新: {template_root}", template_root=self.template_root.as_posix())
-        # 预热缓存以避免首个请求的延迟
+        logger.info("Template cache refreshed: {template_root}", template_root=self.template_root.as_posix())
+        # Warm the cache to avoid latency on the first request.
         _cached_registry(str(self.template_root))
 
 

@@ -9,7 +9,7 @@ def test_health_endpoint_returns_dependency_status(monkeypatch) -> None:
     monkeypatch.setattr(
         "app.api.health.collect_dependency_status",
         lambda: [
-            # 使用命名元组或简单对象模拟
+            # Simulate using a named tuple or simple object
             type("Status", (), {"name": "pandoc", "available": True}),
             type("Status", (), {"name": "libreoffice", "available": False}),
         ],

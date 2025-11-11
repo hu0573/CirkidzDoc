@@ -13,7 +13,7 @@ from app.db.base import Base
 
 def _ensure_sqlite_foreign_keys(dbapi_con, _con_record) -> None:
     """
-    SQLite 默认不开启外键，需要在连接时手动启用。
+    Enable SQLite foreign key constraints, which are disabled by default.
     """
 
     cursor = dbapi_con.cursor()
@@ -44,7 +44,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 def init_database() -> None:
     """
-    初始化数据库（Idempotent）。
+    Initialize the database schema (idempotent).
     """
 
     Base.metadata.create_all(bind=engine)
@@ -53,7 +53,7 @@ def init_database() -> None:
 @contextmanager
 def session_scope() -> Session:
     """
-    提供上下文管理的 Session，自动处理提交或回滚。
+    Provide a context-managed Session that automatically commits or rolls back.
     """
 
     session: Session = SessionLocal()

@@ -1,37 +1,37 @@
 {
   "id": "example_contract",
-  "name": "示例合同",
-  "description": "基础合同模板，包含甲乙双方信息与签署日期",
+  "name": "Sample Contract",
+  "description": "Basic contract template that includes party information and the sign date.",
   "version": "1.0.0",
   "entry": "template.docx",
   "preview": "preview.png",
   "fields": [
     {
       "name": "party_a_name",
-      "label": "甲方名称",
+      "label": "Party A Name",
       "type": "string",
       "required": true,
-      "placeholder": "请输入甲方公司名称"
+      "placeholder": "Enter the company name for Party A"
     },
     {
       "name": "party_b_name",
-      "label": "乙方名称",
+      "label": "Party B Name",
       "type": "string",
       "required": true
     },
     {
       "name": "sign_date",
-      "label": "签署日期",
+      "label": "Sign Date",
       "type": "date",
       "required": true
     },
     {
       "name": "is_confidential",
-      "label": "保密条款",
+      "label": "Confidentiality Clause",
       "type": "boolean",
       "required": false,
       "default": false,
-      "description": "如果勾选，则在合同末尾追加保密条款章节"
+      "description": "When selected, append a confidentiality clause at the end of the contract."
     }
   ],
   "options": {

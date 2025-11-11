@@ -19,3 +19,26 @@ uv run fastapi dev app/main.py --reload
 
 请参阅 `Makefile` 获取 `uv` 同步、运行开发服务以及调用通用健康检查脚本的示例命令。
 
+---
+
+# CirkidzDoc Backend Service (English)
+
+This directory contains the FastAPI-based document template rendering and conversion service. The current stage includes the foundational structure, template metadata loading, and health-check endpoints.
+
+## Quick Start
+
+```bash
+uv sync
+uv run fastapi dev app/main.py --reload
+```
+
+By default the service listens on `http://127.0.0.1:8000`. Check health via `http://127.0.0.1:8000/health`.
+
+## Template Directory
+
+Templates live under `BackEnd/templates/`. The backend reads `metadata.json` files to discover template details. Override the root with `BACKEND_TEMPLATE_ROOT` if necessary.
+
+## Common Commands
+
+See the `Makefile` for examples of syncing dependencies with `uv`, running the development server, and executing the shared health-check script.
+

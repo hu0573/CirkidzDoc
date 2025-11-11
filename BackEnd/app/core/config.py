@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     """
-    后端服务全局配置，使用 pydantic-settings 支持环境变量注入。
+    Global backend configuration using pydantic-settings for environment variable injection.
     """
 
     model_config = SettingsConfigDict(
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     @property
     def template_root(self) -> Path:
         """
-        模板根目录，根据 `template_root_relative` 计算绝对路径。
+        Absolute template root directory derived from `template_root_relative`.
         """
 
         if self.template_root_relative.is_absolute():
@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     @property
     def results_root(self) -> Path:
         """
-        任务结果落盘目录。
+        Directory where rendered task results are stored.
         """
 
         root = self.results_root_relative
@@ -77,7 +77,7 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """
-    Settings 工厂函数，配合 lru_cache 保证全局单例。
+    Settings factory cached by lru_cache to guarantee a global singleton.
     """
 
     return Settings()

@@ -36,7 +36,7 @@ def _resolve_length(value: float, unit: str) -> Mm | Inches | Cm | Pt:
     }
     converter = unit_map.get(unit.lower())
     if converter is None:
-        raise ValueError(f"不支持的图像单位: {unit}")
+        raise ValueError(f"Unsupported image unit: {unit}")
     return converter(value)
 
 
@@ -50,7 +50,7 @@ def _parse_image(value: Any, template_dir: Path) -> ImageSpec | None:
 
     raw_path = value.get("path")
     if raw_path is None:
-        raise ValueError("图像描述缺少 path 字段")
+        raise ValueError("Image specification is missing the path field.")
 
     image_path = Path(raw_path)
     if not image_path.is_absolute():
@@ -84,7 +84,7 @@ def _normalise_scalar(value: Any) -> Any:
 
 class DocxRenderService:
     """
-    基于 docxtpl 的 DOCX 渲染服务。
+    DOCX rendering service built on top of docxtpl.
     """
 
     def __init__(self, template_root: Path) -> None:
@@ -101,9 +101,9 @@ class DocxRenderService:
         template_path = template_dir / metadata.entry
 
         if not template_path.exists():
-            raise FileNotFoundError(f"模板文件不存在: {template_path}")
+            raise FileNotFoundError(f"Template file does not exist: {template_path}")
 
-        logger.info("渲染 DOCX 模板 {template_id}", template_id=metadata.id)
+        logger.info("Rendering DOCX template {template_id}", template_id=metadata.id)
         tpl = DocxTemplate(template_path)
 
         context: dict[str, Any] = {}
@@ -111,10 +111,10 @@ class DocxRenderService:
             image_spec = _parse_image(raw_value, template_dir)
             if image_spec:
                 if not image_spec.path.exists():
-                    raise FileNotFoundError(f"图像文件不存在: {image_spec.path}")
+                    raise FileNotFoundError(f"Image file does not exist: {image_spec.path}")
                 mimetype, _ = mimetypes.guess_type(str(image_spec.path))
                 if mimetype is None or not mimetype.startswith("image/"):
-                    raise ValueError(f"图像文件类型不正确: {image_spec.path}")
+                    raise ValueError(f"Invalid image file type: {image_spec.path}")
 
                 inline_kwargs: dict[str, Any] = {}
                 if image_spec.width is not None:
@@ -131,7 +131,7 @@ class DocxRenderService:
         tpl.render(context)
         tpl.save(output_path.as_posix())
 
-        logger.info("DOCX 渲染完成，输出文件: {output}", output=output_path.as_posix())
+        logger.info("DOCX render complete. Output file: {output}", output=output_path.as_posix())
         return output_path
 
 

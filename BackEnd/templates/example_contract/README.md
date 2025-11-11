@@ -8,3 +8,15 @@
 
 将真实模板文件放置于本目录后，后端无需改动即可识别并提供服务。
 
+---
+
+# Sample Contract Template (English)
+
+This directory illustrates the expected template layout:
+
+- `metadata.json`: Metadata definition consumed by the backend for fields and configuration.
+- `template.docx`: The actual DOCX template file (not committed; add a local placeholder when needed).
+- `preview.png`: Optional preview image displayed in the frontend.
+
+Place real template files here and the backend will discover them without additional changes.
+

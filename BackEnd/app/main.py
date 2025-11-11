@@ -9,7 +9,7 @@ from app.db.session import init_database
 
 def create_app() -> FastAPI:
     """
-    应用工厂，负责初始化日志、FastAPI 实例与路由装配。
+    Application factory that initializes logging, the FastAPI instance, and registers routers.
     """
 
     configure_logging()

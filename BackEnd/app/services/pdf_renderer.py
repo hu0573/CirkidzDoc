@@ -24,7 +24,7 @@ class PdfRenderOptions:
 
 class PdfRenderService:
     """
-    使用 pdfrw/pikepdf 的 PDF 表单填充服务。
+    PDF form filling service built on top of pdfrw and pikepdf.
     """
 
     def __init__(self, *, command_runner: CommandRunner | None = None) -> None:
@@ -57,7 +57,7 @@ class PdfRenderService:
     def _fill_fields(self, pdf_path: Path, data: dict[str, Any]) -> PdfReader:
         template_pdf = PdfReader(str(pdf_path))
         if not template_pdf.Root.AcroForm:
-            logger.warning("PDF 模板缺少 AcroForm，跳过字段填充: {pdf}", pdf=pdf_path)
+            logger.warning("PDF template is missing an AcroForm; skipping field population: {pdf}", pdf=pdf_path)
             return template_pdf
 
         if template_pdf.Root.AcroForm.get("NeedAppearances") != PdfName("true"):
@@ -85,7 +85,7 @@ class PdfRenderService:
 
     def _flatten(self, pdf_path: Path) -> None:
         if not CommandRunner.is_available("qpdf"):
-            logger.warning("qpdf 不可用，无法执行扁平化操作")
+            logger.warning("qpdf is unavailable; cannot flatten annotations.")
             return
 
         temp_output = pdf_path.with_suffix(".flatten.tmp.pdf")
@@ -106,7 +106,7 @@ class PdfRenderService:
                 pdf.make_compatible(pikepdf.PdfCompatibility.PDFA_2_U)
                 pdf.save(pdf_path)
         except (pikepdf.PdfError, AttributeError) as exc:
-            logger.warning("pikepdf PDF/A 转换失败: {error}", error=exc)
+            logger.warning("pikepdf PDF/A conversion failed: {error}", error=exc)
             if CommandRunner.is_available("gs"):
                 temp_output = pdf_path.with_suffix(".pdfa.tmp.pdf")
                 try:
@@ -126,14 +126,14 @@ class PdfRenderService:
                     )
                     temp_output.replace(pdf_path)
                 except CommandExecutionError as gs_error:
-                    logger.error("Ghostscript PDF/A 转换失败: {error}", error=gs_error)
+                    logger.error("Ghostscript PDF/A conversion failed: {error}", error=gs_error)
                     temp_output.unlink(missing_ok=True)
             else:
-                logger.error("缺少 PDF/A 转换工具（pikepdf/ghostscript），跳过处理")
+                logger.error("Missing PDF/A conversion tools (pikepdf/ghostscript); skipping.")
 
     def _apply_password(self, pdf_path: Path, password: str) -> None:
         if not CommandRunner.is_available("qpdf"):
-            logger.warning("qpdf 不可用，无法加密 PDF")
+            logger.warning("qpdf is unavailable; cannot encrypt PDF.")
             return
 
         temp_output = pdf_path.with_suffix(".encrypt.tmp.pdf")
@@ -161,9 +161,9 @@ class PdfRenderService:
         options: PdfRenderOptions | None = None,
     ) -> Path:
         if not template_path.exists():
-            raise FileNotFoundError(f"PDF 模板不存在: {template_path}")
+            raise FileNotFoundError(f"PDF template does not exist: {template_path}")
 
-        logger.info("渲染 PDF 模板: {template}", template=template_path.as_posix())
+        logger.info("Rendering PDF template: {template}", template=template_path.as_posix())
 
         filled_pdf = self._fill_fields(template_path, data)
         writer = PdfWriter()
@@ -179,7 +179,7 @@ class PdfRenderService:
         if options.password:
             self._apply_password(output_path, options.password)
 
-        logger.info("PDF 渲染完成，输出文件：{output}", output=output_path.as_posix())
+        logger.info("PDF render complete. Output file: {output}", output=output_path.as_posix())
         return output_path
 
 

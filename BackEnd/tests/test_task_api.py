@@ -32,7 +32,7 @@ class DummyRunner:
 
 def setup_function() -> None:
     """
-    确保每个测试前数据库为干净状态。
+    Ensure the database is clean before each test.
     """
 
     init_database()
@@ -58,8 +58,8 @@ def test_render_task_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     payload = {
         "template_id": "example_contract",
         "data": {
-            "party_a_name": "示例科技",
-            "party_b_name": "合作伙伴",
+            "party_a_name": "Example Tech",
+            "party_b_name": "Partner Inc",
             "sign_date": "2025-11-11",
         },
         "formats": ["docx", "pdf"],
@@ -71,7 +71,7 @@ def test_render_task_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     task_id = body["task_id"]
     assert body["status"] == "queued"
 
-    # 手动触发任务执行，模拟后台任务完成流程
+    # Manually trigger task execution to simulate background completion.
     task_service.process_task(task_id)
 
     status_resp = client.get(f"/api/templates/tasks/{task_id}")

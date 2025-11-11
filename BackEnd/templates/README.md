@@ -8,3 +8,15 @@
 
 当模板目录发生变更后，可执行 `make refresh-templates` 刷新缓存。
 
+---
+
+# Template Directory Guide (English)
+
+All templates live under `templates/<template_id>/`. Each template directory should include at least:
+
+- `metadata.json`: Template metadata that defines fields, output formats, and advanced options.
+- The actual template file (for example `template.docx` or `form.pdf`), whose filename is specified by the `entry` field in `metadata.json`.
+- Optional static assets (preview images, attachments) for frontend display or supplemental rendering content.
+
+After modifying a template directory, run `make refresh-templates` to rebuild the cache.
+

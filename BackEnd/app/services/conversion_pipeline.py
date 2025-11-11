@@ -12,7 +12,7 @@ from app.services.command_runner import CommandExecutionError, CommandRunner
 
 class ConversionError(RuntimeError):
     """
-    表示格式转换失败。
+    Raised when a document format conversion fails.
     """
 
 
@@ -24,7 +24,7 @@ class ConversionResult:
 
 class ConversionPipeline:
     """
-    文档格式转换流水线，负责协调 LibreOffice / Pandoc 等工具。
+    Document format conversion pipeline that coordinates LibreOffice, Pandoc, and related tools.
     """
 
     DOCX_OUTPUTS = {"docx", "pdf", "html", "rtf", "tex", "markdown", "md"}
@@ -42,7 +42,7 @@ class ConversionPipeline:
     def _ensure_supported(self, target_format: str) -> None:
         fmt = self.normalise_format(target_format)
         if fmt not in self.DOCX_OUTPUTS:
-            raise ConversionError(f"暂不支持的输出格式: {target_format}")
+            raise ConversionError(f"Unsupported output format: {target_format}")
 
     def convert_docx(
         self,
@@ -52,7 +52,7 @@ class ConversionPipeline:
         workdir: Path,
     ) -> list[ConversionResult]:
         if not source_docx.exists():
-            raise FileNotFoundError(f"DOCX 文件不存在: {source_docx}")
+            raise FileNotFoundError(f"DOCX file not found: {source_docx}")
 
         workdir.mkdir(parents=True, exist_ok=True)
 
@@ -90,7 +90,7 @@ class ConversionPipeline:
 
     def _convert_docx_to_pdf(self, source_docx: Path, workdir: Path) -> Path:
         if not CommandRunner.is_available("libreoffice"):
-            raise ConversionError("未检测到 libreoffice，请安装后再试。")
+            raise ConversionError("LibreOffice is not available. Please install it and try again.")
 
         output_path = workdir / f"{source_docx.stem}.pdf"
         try:
@@ -107,17 +107,17 @@ class ConversionPipeline:
                 timeout=240,
             )
         except CommandExecutionError as exc:
-            raise ConversionError(f"LibreOffice 转换 PDF 失败: {exc}") from exc
+            raise ConversionError(f"LibreOffice failed to convert to PDF: {exc}") from exc
 
         if not output_path.exists():
-            raise ConversionError("LibreOffice 未生成 PDF 文件。")
+            raise ConversionError("LibreOffice did not produce a PDF file.")
 
-        logger.info("DOCX -> PDF 转换完成: {path}", path=output_path.as_posix())
+        logger.info("DOCX -> PDF conversion completed: {path}", path=output_path.as_posix())
         return output_path
 
     def _convert_docx_with_pandoc(self, source_docx: Path, fmt: str, workdir: Path) -> Path:
         if not CommandRunner.is_available("pandoc"):
-            raise ConversionError("未检测到 pandoc，请安装后再试。")
+            raise ConversionError("Pandoc is not available. Please install it and try again.")
 
         ext = "md" if fmt == "markdown" else fmt
         output_path = workdir / f"{source_docx.stem}.{ext}"
@@ -143,12 +143,12 @@ class ConversionPipeline:
                 timeout=180,
             )
         except CommandExecutionError as exc:
-            raise ConversionError(f"Pandoc 转换 {fmt} 失败: {exc}") from exc
+            raise ConversionError(f"Pandoc failed to convert to {fmt}: {exc}") from exc
 
         if not output_path.exists():
-            raise ConversionError(f"Pandoc 未生成 {fmt} 文件。")
+            raise ConversionError(f"Pandoc did not produce a {fmt} file.")
 
-        logger.info("DOCX -> {fmt} 转换完成: {path}", fmt=fmt, path=output_path.as_posix())
+        logger.info("DOCX -> {fmt} conversion completed: {path}", fmt=fmt, path=output_path.as_posix())
         return output_path
 
 

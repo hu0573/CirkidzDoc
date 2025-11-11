@@ -14,7 +14,7 @@ class DependencyStatus:
 
 def collect_dependency_status() -> list[DependencyStatus]:
     """
-    检查外部依赖（Pandoc、LibreOffice、qpdf、ghostscript 等）的可用性。
+    Check whether external dependencies (Pandoc, LibreOffice, qpdf, ghostscript, etc.) are available.
     """
 
     availability = ensure_commands_available(settings.dependency_commands)

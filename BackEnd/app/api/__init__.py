@@ -1,5 +1,5 @@
 """
-API 路由模块，按领域拆分子路由。
+API routing module that organizes sub-routers by domain.
 """
 
 

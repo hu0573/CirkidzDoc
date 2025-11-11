@@ -1,7 +1,7 @@
 [project]
 name = "cirkidz-backend"
 version = "0.1.0"
-description = "文档模板填充与转换后端服务"
+description = "Backend service for document template filling and conversion"
 requires-python = ">=3.11"
 dependencies = [
     "docxcompose>=1.4.0",

@@ -15,7 +15,7 @@ from app.services.docx_renderer import DocxRenderService
 def template_metadata() -> TemplateMetadata:
     return TemplateMetadata(
         id="test_template",
-        name="测试模板",
+        name="Test Template",
         entry="template.docx",
         fields=[],
     )
@@ -27,10 +27,10 @@ def template_root(tmp_path: Path, template_metadata: TemplateMetadata) -> Path:
     template_dir.mkdir(parents=True, exist_ok=True)
 
     document = Document()
-    document.add_paragraph("甲方：{{ party_a_name }}")
-    document.add_paragraph("乙方：{{ party_b_name }}")
-    document.add_paragraph("签署日期：{{ sign_date }}")
-    document.add_paragraph("Logo：{{ logo }}")
+    document.add_paragraph("Party A: {{ party_a_name }}")
+    document.add_paragraph("Party B: {{ party_b_name }}")
+    document.add_paragraph("Sign date: {{ sign_date }}")
+    document.add_paragraph("Logo: {{ logo }}")
     document.save(template_dir / template_metadata.entry)
 
     image_path = template_dir / "logo.png"
@@ -50,8 +50,8 @@ def test_docx_renderer_supports_basic_fields_and_images(
     renderer.render(
         template_metadata,
         {
-            "party_a_name": "甲方公司",
-            "party_b_name": "乙方公司",
+            "party_a_name": "Party A Company",
+            "party_b_name": "Party B Company",
             "sign_date": date(2025, 1, 1),
             "logo": {
                 "__type": "image",
@@ -67,9 +67,9 @@ def test_docx_renderer_supports_basic_fields_and_images(
     rendered = Document(output_path)
     full_text = "\n".join(paragraph.text for paragraph in rendered.paragraphs)
 
-    assert "甲方：甲方公司" in full_text
-    assert "乙方：乙方公司" in full_text
-    assert "签署日期：2025-01-01" in full_text
-    assert rendered.inline_shapes, "图像未写入文档"
+    assert "Party A: Party A Company" in full_text
+    assert "Party B: Party B Company" in full_text
+    assert "Sign date: 2025-01-01" in full_text
+    assert rendered.inline_shapes, "Image was not written to the document"
 
 

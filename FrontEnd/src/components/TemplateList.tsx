@@ -12,7 +12,7 @@ export function TemplateList({ templates, selectedId, onSelect, isLoading, error
   if (isLoading) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm">
-        正在加载模板列表...
+        Loading template list...
       </div>
     )
   }
@@ -20,7 +20,7 @@ export function TemplateList({ templates, selectedId, onSelect, isLoading, error
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600 shadow-sm">
-        加载模板列表失败：{error}
+        Failed to load template list: {error}
       </div>
     )
   }
@@ -28,7 +28,7 @@ export function TemplateList({ templates, selectedId, onSelect, isLoading, error
   if (!templates?.length) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm">
-        暂无可用模板，请先在后端导入。
+        No templates available. Please import them in the backend first.
       </div>
     )
   }
@@ -53,7 +53,7 @@ export function TemplateList({ templates, selectedId, onSelect, isLoading, error
               <div>
                 <h3 className="text-base font-semibold text-slate-900">{template.name}</h3>
                 {template.version ? (
-                  <p className="text-xs text-slate-500">版本 {template.version}</p>
+                  <p className="text-xs text-slate-500">Version {template.version}</p>
                 ) : null}
               </div>
               <span
@@ -62,10 +62,12 @@ export function TemplateList({ templates, selectedId, onSelect, isLoading, error
                   isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600',
                 ].join(' ')}
               >
-                {template.field_count} 个字段
+                {template.field_count} fields
               </span>
             </div>
-            <p className="line-clamp-3 text-sm text-slate-600">{template.description ?? '暂无描述'}</p>
+            <p className="line-clamp-3 text-sm text-slate-600">
+              {template.description ?? 'No description available.'}
+            </p>
             {template.allowed_outputs.length ? (
               <div className="flex flex-wrap gap-1">
                 {template.allowed_outputs.map((format) => (

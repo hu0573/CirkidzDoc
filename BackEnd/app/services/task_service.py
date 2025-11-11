@@ -24,7 +24,7 @@ class TaskNotFoundError(KeyError):
 
 class TaskService:
     """
-    封装任务创建、状态查询、结果管理等能力。
+    Service that encapsulates task creation, status retrieval, and result management operations.
     """
 
     def __init__(
@@ -61,7 +61,7 @@ class TaskService:
     # ------------------------ Clean up --------------------- #
     def cleanup_expired_tasks(self) -> int:
         """
-        清理已经过期的任务及其关联文件。
+        Delete expired tasks and their associated files.
         """
 
         now = datetime.now(timezone.utc)
@@ -80,7 +80,7 @@ class TaskService:
                 task_ids = [task.id for task in expired_tasks]
                 session.execute(delete(TaskRecord).where(TaskRecord.id.in_(task_ids)))
                 removed = len(task_ids)
-                logger.info("已清理 {count} 个过期任务", count=removed)
+                logger.info("Removed {count} expired tasks", count=removed)
 
         return removed
 
@@ -107,7 +107,7 @@ class TaskService:
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.task_expiry_minutes)
         task_id = uuid4().hex
 
-        # 异步任务创建前清理已过期数据，避免磁盘不断膨胀
+        # Clean up expired data before creating a new async task to prevent disk growth.
         self.cleanup_expired_tasks()
 
         with session_scope() as session:
@@ -187,7 +187,7 @@ class TaskService:
         try:
             outcome.file_path.unlink(missing_ok=True)
         except Exception:  # noqa: BLE001
-            logger.warning("删除临时文件失败: {path}", path=outcome.file_path.as_posix())
+            logger.warning("Failed to delete temporary file: {path}", path=outcome.file_path.as_posix())
 
         return TaskResultRecord(
             id=uuid4().hex,
@@ -212,11 +212,11 @@ class TaskService:
         return hasher.hexdigest()
 
     def process_task(self, task_id: str) -> None:
-        logger.info("开始处理任务 {task_id}", task_id=task_id)
+        logger.info("Starting to process task {task_id}", task_id=task_id)
         with session_scope() as session:
             task = session.get(TaskRecord, task_id)
             if task is None:
-                logger.error("任务 {task_id} 不存在，跳过执行", task_id=task_id)
+                logger.error("Task {task_id} does not exist. Skipping execution.", task_id=task_id)
                 return
 
             try:
@@ -240,9 +240,9 @@ class TaskService:
                 task.status = TaskStatusEnum.SUCCEEDED
                 task.progress = 100
 
-                logger.info("任务 {task_id} 已完成，共生成 {count} 个结果", task_id=task_id, count=len(outcomes))
+                logger.info("Task {task_id} finished with {count} generated results", task_id=task_id, count=len(outcomes))
             except Exception as exc:
-                logger.exception("任务 {task_id} 执行失败: {error}", task_id=task_id, error=exc)
+                logger.exception("Task {task_id} failed: {error}", task_id=task_id, error=exc)
                 task.status = TaskStatusEnum.FAILED
                 task.error_message = str(exc)
                 task.progress = 100

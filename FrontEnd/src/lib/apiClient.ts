@@ -30,12 +30,12 @@ apiClient.interceptors.response.use(
       const message =
         (error.response.data as { detail?: string })?.detail ??
         error.message ??
-        '接口调用失败'
+        'API call failed.'
       return Promise.reject(new ApiError(message, error.response.status, error.response.data))
     }
 
     if (error.request) {
-      return Promise.reject(new ApiError('无法连接到后端服务，请检查网络或服务状态。'))
+      return Promise.reject(new ApiError('Unable to reach the backend service. Please check your network or service status.'))
     }
 
     return Promise.reject(new ApiError(error.message))

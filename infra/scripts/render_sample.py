@@ -23,27 +23,27 @@ def build_template(template_path: Path) -> None:
     if template_path.exists():
         return
     doc = Document()
-    doc.add_heading("示例服务协议", level=1)
-    doc.add_paragraph("甲方：{{ party_a }}")
-    doc.add_paragraph("乙方：{{ party_b }}")
-    doc.add_paragraph("签署日期：{{ sign_date }}")
+    doc.add_heading("Sample Service Agreement", level=1)
+    doc.add_paragraph("Party A: {{ party_a }}")
+    doc.add_paragraph("Party B: {{ party_b }}")
+    doc.add_paragraph("Sign Date: {{ sign_date }}")
     doc.add_paragraph("")
-    doc.add_paragraph("主要条款摘要：")
-    doc.add_paragraph("1. 服务范围：{{ clause_1 }}")
-    doc.add_paragraph("2. 费用条款：{{ clause_2 }}")
-    doc.add_paragraph("3. 联系方式：{{ contact }}")
+    doc.add_paragraph("Key Terms Summary:")
+    doc.add_paragraph("1. Service Scope: {{ clause_1 }}")
+    doc.add_paragraph("2. Pricing Terms: {{ clause_2 }}")
+    doc.add_paragraph("3. Contact Information: {{ contact }}")
     doc.add_paragraph("")
-    doc.add_paragraph("（以上内容由自动化渲染流程填充生成）")
+    doc.add_paragraph("(The automated rendering pipeline produces all content above.)")
     doc.save(template_path)
 
 
 def render_docx(template_path: Path, output_path: Path) -> dict:
     context = {
-        "party_a": "奇客科技有限公司",
-        "party_b": "示例客户",
+        "party_a": "Cirkidz Tech Ltd.",
+        "party_b": "Sample Client",
         "sign_date": date.today().isoformat(),
-        "clause_1": "提供文档模板自动填充与格式转换服务。",
-        "clause_2": "按实际使用量结算，试点阶段免服务费。",
+        "clause_1": "Provide automated document template filling and format conversion services.",
+        "clause_2": "Bill based on actual usage; waive service fees during the pilot stage.",
         "contact": "support@example.com",
     }
     template = DocxTemplate(str(template_path))

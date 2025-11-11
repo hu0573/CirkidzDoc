@@ -42,7 +42,7 @@ def test_pdf_renderer_fills_text_and_checkbox_fields(tmp_path: Path, monkeypatch
     service.render(
         template_path,
         {
-            "full_name": "张三",
+            "full_name": "John Doe",
             "agreement": True,
         },
         output_path=output_path,
@@ -50,7 +50,7 @@ def test_pdf_renderer_fills_text_and_checkbox_fields(tmp_path: Path, monkeypatch
     )
 
     assert output_path.exists()
-    assert text_annotation.V == PdfString.encode("张三")
+    assert text_annotation.V == PdfString.encode("John Doe")
     assert checkbox_annotation.V == PDF_CHECKBOX_ON
     assert checkbox_annotation.AS == PDF_CHECKBOX_ON
     assert FakePdf.Root.AcroForm.NeedAppearances == PdfName("true")

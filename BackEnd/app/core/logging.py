@@ -17,7 +17,7 @@ LOGGING_FORMAT = (
 
 def configure_logging(level: str | Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | None = None) -> None:
     """
-    使用 Loguru 配置统一日志格式，兼容标准 logging。
+    Configure a unified Loguru logging setup that remains compatible with the standard logging module.
     """
 
     logger.remove()

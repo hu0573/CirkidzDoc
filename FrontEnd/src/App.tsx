@@ -24,7 +24,7 @@ function pickErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message
   }
-  return '发生未知错误，请稍后重试。'
+  return 'An unknown error occurred. Please try again later.'
 }
 
 function useTaskPolling(taskId: string | null) {
@@ -123,7 +123,7 @@ function App() {
   const handleRetry = async (task: TaskStatus) => {
     const payload = taskPayloadMap[task.task_id]
     if (!payload) {
-      setUiError('未找到原始任务参数，请重新填写表单后重试。')
+      setUiError('Cannot find the original task parameters. Please refill the form and try again.')
       return
     }
     await renderMutation.mutateAsync(payload)
@@ -152,13 +152,13 @@ function App() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">文档模板填充控制台</h1>
+            <h1 className="text-xl font-semibold text-slate-900">Document Template Console</h1>
             <p className="text-sm text-slate-500">
-              选择模板、填写字段并提交渲染任务，支持多格式输出与结果下载。
+              Select a template, fill in the fields, and submit render tasks with multi-format output and result downloads.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>后端 API 地址</span>
+            <span>Backend API URL</span>
             <code className="rounded bg-slate-100 px-2 py-1">
               {import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'}
             </code>
@@ -174,7 +174,7 @@ function App() {
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-[2.2fr,3fr]">
           <div className="flex flex-col gap-4">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-base font-semibold text-slate-900">模板列表</h2>
+              <h2 className="mb-4 text-base font-semibold text-slate-900">Template List</h2>
               <TemplateList
                 templates={templates}
                 selectedId={selectedTemplateId}
@@ -188,7 +188,7 @@ function App() {
             </div>
             {templateDetailError ? (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-                模板详情加载失败：{templateDetailError}
+                Failed to load template details: {templateDetailError}
               </div>
             ) : null}
           </div>

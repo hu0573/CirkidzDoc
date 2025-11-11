@@ -18,25 +18,25 @@ const statusColors: Record<
     text: 'text-amber-700',
     bg: 'bg-amber-50',
     border: 'border-amber-200',
-    label: '排队中',
+    label: 'Queued',
   },
   processing: {
     text: 'text-blue-700',
     bg: 'bg-blue-50',
     border: 'border-blue-200',
-    label: '处理中',
+    label: 'Processing',
   },
   succeeded: {
     text: 'text-emerald-700',
     bg: 'bg-emerald-50',
     border: 'border-emerald-200',
-    label: '已完成',
+    label: 'Completed',
   },
   failed: {
     text: 'text-red-700',
     bg: 'bg-red-50',
     border: 'border-red-200',
-    label: '已失败',
+    label: 'Failed',
   },
 }
 
@@ -76,8 +76,8 @@ export function TaskCenter({
     <div className="flex h-full flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <header className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h3 className="text-base font-semibold text-slate-900">任务状态与下载</h3>
-          <p className="text-xs text-slate-500">查看最近的任务执行情况，下载结果或发起重试。</p>
+          <h3 className="text-base font-semibold text-slate-900">Task Status & Downloads</h3>
+          <p className="text-xs text-slate-500">Review recent task executions, download results, or trigger retries.</p>
         </div>
         {onClear ? (
           <button
@@ -85,7 +85,7 @@ export function TaskCenter({
             className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-700"
             onClick={onClear}
           >
-            清空历史
+            Clear history
           </button>
         ) : null}
       </header>
@@ -95,13 +95,15 @@ export function TaskCenter({
       ) : null}
 
       <section className="space-y-3">
-        <h4 className="text-sm font-semibold text-slate-800">当前任务</h4>
+        <h4 className="text-sm font-semibold text-slate-800">Current Task</h4>
         {activeTask ? (
           <div className="space-y-3 rounded-lg border border-slate-200 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-slate-800">任务 ID：{activeTask.task_id}</p>
-                <p className="text-xs text-slate-500">实时刷新 {isPolling ? '中...' : ''}</p>
+                <p className="text-sm font-medium text-slate-800">Task ID: {activeTask.task_id}</p>
+                <p className="text-xs text-slate-500">
+                  Live refresh {isPolling ? 'active...' : ''}
+                </p>
               </div>
               <StatusTag status={activeTask.status} />
             </div>
@@ -130,13 +132,13 @@ export function TaskCenter({
                   className="rounded-lg border border-blue-500 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50"
                   onClick={() => void onRetry(activeTask)}
                 >
-                  重试任务
+                  Retry task
                 </button>
               </div>
             ) : null}
             {activeTask.status === 'succeeded' ? (
               <div className="space-y-2">
-                <h5 className="text-sm font-semibold text-slate-700">生成文件</h5>
+                <h5 className="text-sm font-semibold text-slate-700">Generated Files</h5>
                 <ul className="space-y-2">
                   {activeTask.results.map((result) => (
                     <li
@@ -148,17 +150,17 @@ export function TaskCenter({
                           {result.format.toUpperCase()}
                           {result.expires_at ? (
                             <span className="ml-2 text-xs text-slate-400">
-                              过期时间：{new Date(result.expires_at).toLocaleString()}
+                              Expires at: {new Date(result.expires_at).toLocaleString()}
                             </span>
                           ) : null}
                         </span>
                         {result.file_size ? (
                           <span className="text-xs text-slate-500">
-                            文件大小：{formatFileSize(result.file_size)}
+                            File size: {formatFileSize(result.file_size)}
                           </span>
                         ) : null}
                         {result.checksum ? (
-                          <span className="text-[11px] text-slate-400">校验码：{result.checksum}</span>
+                          <span className="text-[11px] text-slate-400">Checksum: {result.checksum}</span>
                         ) : null}
                       </div>
                       <button
@@ -166,7 +168,7 @@ export function TaskCenter({
                         className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500"
                         onClick={() => void onDownload(result, activeTask)}
                       >
-                        下载
+                        Download
                       </button>
                     </li>
                   ))}
@@ -176,25 +178,25 @@ export function TaskCenter({
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-            暂无正在运行的任务
+            No running tasks.
           </div>
         )}
       </section>
 
       <section className="space-y-3">
-        <h4 className="text-sm font-semibold text-slate-800">历史记录</h4>
+        <h4 className="text-sm font-semibold text-slate-800">History</h4>
         {history.length ? (
           <ul className="space-y-3">
             {history.map((task) => (
               <li key={task.task_id} className="rounded-lg border border-slate-200 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-slate-800">任务 ID：{task.task_id}</span>
+                    <span className="text-sm font-medium text-slate-800">Task ID: {task.task_id}</span>
                     <span className="text-xs text-slate-500">
-                      状态：{statusColors[task.status].label} · 进度 {task.progress}%
+                      Status: {statusColors[task.status].label} · Progress {task.progress}%
                     </span>
                     {task.error ? (
-                      <span className="text-xs text-red-600">错误：{task.error}</span>
+                      <span className="text-xs text-red-600">Error: {task.error}</span>
                     ) : null}
                   </div>
                   <StatusTag status={task.status} />
@@ -208,13 +210,13 @@ export function TaskCenter({
                           className="rounded-lg border border-blue-400 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
                           onClick={() => void onDownload(result, task)}
                         >
-                          下载 {result.format.toUpperCase()}
+                          Download {result.format.toUpperCase()}
                         </button>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 text-xs text-slate-500">尚未生成文件。</p>
+                  <p className="mt-3 text-xs text-slate-500">No files generated yet.</p>
                 )}
                 {task.status === 'failed' ? (
                   <div className="mt-3 flex justify-end">
@@ -223,7 +225,7 @@ export function TaskCenter({
                       className="rounded-lg border border-blue-500 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
                       onClick={() => void onRetry(task)}
                     >
-                      重试
+                      Retry
                     </button>
                   </div>
                 ) : null}
@@ -232,7 +234,7 @@ export function TaskCenter({
           </ul>
         ) : (
           <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-            尚无历史记录。
+            No history yet.
           </div>
         )}
       </section>

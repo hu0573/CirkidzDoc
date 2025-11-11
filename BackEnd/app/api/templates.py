@@ -13,11 +13,11 @@ router = APIRouter()
 @router.get(
     "",
     response_model=list[TemplateSummary],
-    summary="获取模板列表",
+    summary="List available templates",
 )
 def list_templates() -> list[TemplateSummary]:
     """
-    列出所有可用模板（仅概要信息）。
+    List all available templates (summary information only).
     """
 
     return [TemplateSummary.from_metadata(metadata) for metadata in template_repository.list_templates()]
@@ -26,11 +26,11 @@ def list_templates() -> list[TemplateSummary]:
 @router.get(
     "/{template_id}",
     response_model=TemplateDetail,
-    summary="获取模板详情",
+    summary="Get template detail",
 )
 def get_template_detail(template_id: str) -> TemplateDetail:
     """
-    查询指定模板的详细元数据。
+    Retrieve detailed metadata for the specified template.
     """
 
     try:
@@ -38,7 +38,7 @@ def get_template_detail(template_id: str) -> TemplateDetail:
     except TemplateNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"模板 {template_id} 不存在",
+            detail=f"Template {template_id} does not exist",
         ) from None
 
     return TemplateDetail(template=metadata)
@@ -48,11 +48,11 @@ def get_template_detail(template_id: str) -> TemplateDetail:
     "/render",
     response_model=RenderResponse,
     status_code=HTTPStatus.ACCEPTED,
-    summary="提交模板渲染任务",
+    summary="Submit a template render task",
 )
 def render_template(request: RenderRequest, background_tasks: BackgroundTasks) -> RenderResponse:
     """
-    创建渲染任务并交由后台执行。
+    Create a render task and schedule it for background execution.
     """
 
     try:
@@ -60,7 +60,7 @@ def render_template(request: RenderRequest, background_tasks: BackgroundTasks) -
     except TemplateNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"模板 {request.template_id} 不存在",
+            detail=f"Template {request.template_id} does not exist",
         ) from None
 
     response = task_service.create_task(request)
@@ -71,38 +71,38 @@ def render_template(request: RenderRequest, background_tasks: BackgroundTasks) -
 @router.get(
     "/tasks/{task_id}",
     response_model=TaskStatus,
-    summary="查询任务状态",
+    summary="Get task status",
 )
 def get_task_status(task_id: str) -> TaskStatus:
     """
-    返回指定任务的当前状态、进度与结果列表。
+    Return the current status, progress, and results of the specified task.
     """
 
     try:
         return task_service.fetch_status(task_id)
     except TaskNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"任务 {task_id} 不存在") from None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task {task_id} does not exist") from None
 
 
 @router.get(
     "/tasks/{task_id}/files/{target_format}",
-    summary="下载任务结果文件",
+    summary="Download a task result file",
 )
 def download_task_file(
     task_id: str,
     target_format: str,
-    token: str = Query(..., description="下载授权 token"),
+    token: str = Query(..., description="Download authorization token"),
 ) -> FileResponse:
     """
-    下载指定任务的结果文件。
+    Download the result file for the specified task.
     """
 
     try:
         path = task_service.resolve_download_path(task_id, token, target_format.lower())
     except TaskNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="任务或文件不存在") from None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task or file does not exist") from None
     except FileNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="文件已过期或不存在") from None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File has expired or is missing") from None
 
     filename = path.name
     return FileResponse(path, filename=filename, media_type="application/octet-stream")
