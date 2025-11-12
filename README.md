@@ -42,6 +42,21 @@ Frontend UI: `http://127.0.0.1:5173`
 
 Stop the stack with `Ctrl+C`; the launcher gracefully shuts down all processes.
 
+#### Running on the remote notebook server
+
+When deploying on the managed notebook (the one behind the FRP tunnel), run the launcher from a shell on that machine using the following sequence:
+
+```bash
+newgrp docker                     # pick up docker group membership if you just logged in
+source ~/.local/bin/env           # add uv/node from ~/.local/bin to PATH
+export VITE_API_BASE_URL="http://141.148.141.184:9005/api"
+python run_project.py --frontend-host 0.0.0.0
+```
+
+- The backend listens on `0.0.0.0:8000` and the frontend on `0.0.0.0:5173`.
+- FRP maps these services to the public endpoints `http://141.148.141.184:9005/` (API) and `http://141.148.141.184:9004/` (Vite dev server).
+- To detach the processes, you can instead run the helper script `~/start_cirkidz.sh`, which wraps the steps above and redirects logs to `~/Code/run_project.log`.
+
 ### Using the Frontend Console
 1. Open `http://127.0.0.1:5173` in your browser once `python run_project.py` reports that both services are running.
 2. **Template Library** — the left panel lists available templates; click one to view details.
