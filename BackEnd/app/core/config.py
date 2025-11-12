@@ -59,6 +59,7 @@ class Settings(BaseSettings):
         default=(
             "http://localhost:5173",
             "http://127.0.0.1:5173",
+            "http://141.148.141.184:9004",
         )
     )
 
