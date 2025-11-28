@@ -12,10 +12,34 @@ export class ApiError extends Error {
   }
 }
 
-const defaultBaseUrl = 'http://localhost:8000/api'
+/**
+ * Dynamically determine the backend API base URL.
+ * Priority:
+ * 1. VITE_API_BASE_URL environment variable
+ * 2. Auto-detect based on current page hostname and port
+ */
+function getDefaultBaseUrl(): string {
+  // Use environment variable if set
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+
+  // Auto-detect based on current page location
+  const hostname = window.location.hostname
+  const protocol = window.location.protocol
+  
+  // Try common backend ports (8000, 8001)
+  // If frontend is on 5174, backend is likely on 8000 or 8001
+  const backendPorts = [8000, 8001]
+  const defaultPort = backendPorts[0] // Default to 8000
+  
+  return `${protocol}//${hostname}:${defaultPort}/api`
+}
+
+const defaultBaseUrl = getDefaultBaseUrl()
 
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? defaultBaseUrl,
+  baseURL: defaultBaseUrl,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
