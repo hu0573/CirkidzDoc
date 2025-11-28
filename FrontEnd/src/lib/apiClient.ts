@@ -13,10 +13,10 @@ export class ApiError extends Error {
 }
 
 /**
- * Dynamically determine the backend API base URL.
+ * Get the backend API base URL.
  * Priority:
  * 1. VITE_API_BASE_URL environment variable
- * 2. Auto-detect based on current page hostname and port
+ * 2. Fixed port 8001 on the same hostname
  */
 function getDefaultBaseUrl(): string {
   // Use environment variable if set
@@ -24,16 +24,11 @@ function getDefaultBaseUrl(): string {
     return import.meta.env.VITE_API_BASE_URL
   }
 
-  // Auto-detect based on current page location
+  // Use current page hostname with fixed port 8001
   const hostname = window.location.hostname
   const protocol = window.location.protocol
   
-  // Try common backend ports (8000, 8001)
-  // If frontend is on 5174, backend is likely on 8000 or 8001
-  const backendPorts = [8000, 8001]
-  const defaultPort = backendPorts[0] // Default to 8000
-  
-  return `${protocol}//${hostname}:${defaultPort}/api`
+  return `${protocol}//${hostname}:8001/api`
 }
 
 const defaultBaseUrl = getDefaultBaseUrl()
