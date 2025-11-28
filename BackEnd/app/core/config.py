@@ -62,6 +62,10 @@ class Settings(BaseSettings):
             "http://141.148.141.184:9004",
         )
     )
+    cors_allow_all_origins: bool = Field(
+        default=False,
+        description="Allow all origins for CORS (useful for development on local network)",
+    )
 
     @computed_field
     @property

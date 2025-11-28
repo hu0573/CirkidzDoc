@@ -23,12 +23,20 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
+    # Configure CORS: allow all origins if enabled or in development, otherwise use specific origins
+    cors_kwargs = {
+        "allow_credentials": True,
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
+    if settings.cors_allow_all_origins or settings.environment == "development":
+        cors_kwargs["allow_origins"] = ["*"]
+    else:
+        cors_kwargs["allow_origins"] = list(settings.cors_allow_origins)
+
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=list(settings.cors_allow_origins),
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        **cors_kwargs,
     )
 
     application.include_router(api_router)

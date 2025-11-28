@@ -145,7 +145,7 @@ def parse_args() -> argparse.Namespace:
     group.add_argument("--frontend-only", action="store_true", help="Start only the frontend service.")
     parser.add_argument("--backend-host", default="0.0.0.0", help="Backend listen address, defaults to 0.0.0.0.")
     parser.add_argument("--backend-port", default="8000", help="Backend listen port, defaults to 8000.")
-    parser.add_argument("--frontend-host", default=None, help="Frontend listen address passed to Vite, e.g. 0.0.0.0.")
+    parser.add_argument("--frontend-host", default="0.0.0.0", help="Frontend listen address passed to Vite, defaults to 0.0.0.0.")
     return parser.parse_args()
 
 
